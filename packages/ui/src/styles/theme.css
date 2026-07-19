@@ -260,17 +260,25 @@ html[data-inactive] .accent-text { filter: saturate(0.6); }
 
 /* NavigationView：透明底、激活项加粗高亮 */
 .nav {
-  position: relative; width: 280px; padding: var(--sp-s);
+  position: relative; width: 280px; padding: var(--sp-s) 4px;   /* WinUI:条目水平边距 4,两态一致 */
   display: flex; flex-direction: column; gap: 2px;
   transition: width var(--slow) var(--fluent-standard);
 }
-.nav[data-collapsed] { width: 48px; padding: var(--sp-s) 4px; }
-/* 折叠态图标列与展开态同 x(4+16 = 8+12 = 20),展开/收缩动画图标不漂移 */
-.nav[data-collapsed] .nav-item { padding-left: 16px; }
+.nav[data-collapsed] { width: 48px; }   /* 紧凑轨 48 = 4 + 40 + 4,条目几何与展开态完全一致(12+16+12=40 图标天然居中) */
 /* 组件级导航条目多：列表区可滚，汉堡钉顶、设置钉底 */
 .nav-top { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; min-height: 0; overscroll-behavior: contain;
-  scrollbar-width: none; }               /* 滚动条会占宽挤窄条目,与汉堡行错位(WinUI 面板规范:隐藏,滚轮/拖动可滚) */
-.nav-top::-webkit-scrollbar { display: none; }
+  scrollbar-gutter: stable; }            /* WinUI overlay 近似:占位恒定 6px(透明),悬停才浮现滑块 */
+.nav-top::-webkit-scrollbar { width: 6px; }
+.nav-top::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+.nav-top:hover::-webkit-scrollbar-thumb { background: var(--stroke); }
+.nav-top::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+/* 汉堡/搜索槽/底部区与列表同步让出滚动条位:行宽一致,悬停背景不再错位 */
+.nav > .nav-hamburger, .nav-slot, .nav-bottom { margin-right: 6px; }
+.nav > .nav-hamburger { width: auto; align-self: stretch; }   /* width:100% 会无视 margin 溢出,改走拉伸 */
+/* 折叠态(纯图标窄轨):隐藏滚动条并收回让位 */
+.nav[data-collapsed] .nav-top { scrollbar-width: none; scrollbar-gutter: auto; }
+.nav[data-collapsed] .nav-top::-webkit-scrollbar { display: none; }
+.nav[data-collapsed] > .nav-hamburger, .nav[data-collapsed] .nav-bottom { margin-right: 0; }
 .nav-top .nav-item { flex-shrink: 0; }
 .nav-bottom { display: flex; flex-direction: column; gap: 2px; }
 .nav-spacer { flex: 1; }
