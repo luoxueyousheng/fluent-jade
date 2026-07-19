@@ -13,7 +13,7 @@ import {
   VirtualList,
   message,
 } from '@fluent-jade/ui';
-import { CheckmarkCircleRegular } from '@fluent-jade/icon';
+import { CheckmarkCircleRegular, WarningRegular } from '@fluent-jade/icon';
 import type { DocDef } from '../types';
 
 /* ---- Popconfirm ---- */
@@ -70,14 +70,22 @@ export function PopconfirmDangerExample() {
       code: `
 import { useState } from 'react';
 import { Button, Popconfirm, message } from '@fluent-jade/ui';
+import { WarningRegular } from '@fluent-jade/icon';
 
 export function PopconfirmControlledExample() {
   const [open, setOpen] = useState(false);
   return (
-    <Popconfirm open={open} onOpenChange={setOpen} title="确认操作?"
-      onCancel={() => message.info('已取消')} onConfirm={() => message.success('已确认')}>
-      <Button onClick={() => setOpen(true)}>程序触发</Button>
-    </Popconfirm>
+    <>
+      <Popconfirm open={open} onOpenChange={setOpen} title="确认操作?"
+        icon={<WarningRegular size={18} color="var(--caution)" />}
+        onCancel={() => message.info('已取消')} onConfirm={() => message.success('已确认')}>
+        <Button onClick={() => setOpen(true)}>程序触发</Button>
+      </Popconfirm>
+      <Popconfirm defaultOpen={false} title="无图标确认" icon={false}
+        onConfirm={() => message.success('已确认')}>
+        <Button>默认关闭</Button>
+      </Popconfirm>
+    </>
   );
 }`,
     },
@@ -101,9 +109,17 @@ export function PopconfirmControlledExample() {
 function PopconfirmControlled() {
   const [open, setOpen] = useState(false);
   return (
-    <Popconfirm open={open} onOpenChange={setOpen} title="确认操作?" onConfirm={() => message.success('已确认')}>
-      <Button onClick={() => setOpen(true)}>程序触发</Button>
-    </Popconfirm>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <Popconfirm open={open} onOpenChange={setOpen} title="确认操作?"
+        icon={<WarningRegular size={18} color="var(--caution)" />}
+        onConfirm={() => message.success('已确认')}>
+        <Button onClick={() => setOpen(true)}>程序触发</Button>
+      </Popconfirm>
+      <Popconfirm defaultOpen={false} title="无图标确认" icon={false}
+        onConfirm={() => message.success('已确认')}>
+        <Button>默认关闭</Button>
+      </Popconfirm>
+    </div>
   );
 }
 
@@ -245,6 +261,7 @@ import { Button, Tour } from '@fluent-jade/ui';
 
 export function TourExample() {
   const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState(0);
   const steps = [
     { target: '#tour-start', title: '第一步', content: '点击这里开始操作。' },
     { target: '#tour-export', title: '第二步', content: '导出你的配置。', placement: 'bottom' },
@@ -257,9 +274,10 @@ export function TourExample() {
         <Button id="tour-export">导出</Button>
         <Button id="tour-help">帮助</Button>
       </div>
-      <Button size="small" onClick={() => setOpen(true)}>启动引导</Button>
-      <Tour steps={steps} open={open} onClose={() => setOpen(false)}
-            onFinish={() => setOpen(false)} nextText="继续" prevText="返回" finishText="知道了" />
+      <Button size="small" onClick={() => { setCurrent(0); setOpen(true); }}>启动引导</Button>
+      <Tour steps={steps} open={open} current={current} onChange={setCurrent}
+            onClose={() => setOpen(false)} onFinish={() => setOpen(false)}
+            nextText="继续" prevText="返回" finishText="知道了" />
     </>
   );
 }`,
@@ -286,6 +304,7 @@ export function TourExample() {
 
 function TourDemo() {
   const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState(0);
   const steps = [
     { target: '#tour-start', title: '第一步', content: '点击这里开始操作。' },
     { target: '#tour-export', title: '第二步', content: '导出你的配置。', placement: 'bottom' as const },
@@ -298,8 +317,9 @@ function TourDemo() {
         <Button id="tour-export">导出</Button>
         <Button id="tour-help">帮助</Button>
       </div>
-      <Button size="small" style={{ marginTop: 12 }} onClick={() => setOpen(true)}>启动引导</Button>
-      <Tour steps={steps} open={open} onClose={() => setOpen(false)} onFinish={() => setOpen(false)}
+      <Button size="small" style={{ marginTop: 12 }} onClick={() => { setCurrent(0); setOpen(true); }}>启动引导</Button>
+      <Tour steps={steps} open={open} current={current} onChange={setCurrent}
+            onClose={() => setOpen(false)} onFinish={() => setOpen(false)}
             nextText="继续" prevText="返回" finishText="知道了" />
     </>
   );
@@ -502,6 +522,7 @@ export function TransferExample() {
   return (
     <Transfer dataSource={data} targetKeys={targetKeys}
       titles={['所有项目', '已选项目']}
+      render={(item) => item.title}
       disabled={false}
       onChange={(keys) => setTargetKeys(keys)} />
   );
@@ -534,6 +555,7 @@ function TransferDemo() {
   return (
     <Transfer dataSource={data} targetKeys={targetKeys}
       titles={['所有项目', '已选项目']}
+      render={(item) => item.title}
       disabled={false}
       onChange={(keys) => setTargetKeys(keys)} />
   );
