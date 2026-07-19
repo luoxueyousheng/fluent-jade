@@ -11,7 +11,7 @@ import {
   useToast,
   type LogEntry,
 } from '@fluent-jade/ui';
-import { inv, useJadeEvent } from '@fluent-jade/bridge';
+import { host, useJadeEvent } from '@fluent-jade/bridge';
 import { docGroups } from '../docs/registry';
 
 
@@ -83,11 +83,15 @@ export function HomePage({ entries, clearLog, onOpen }: {
       <Divider>宿主通信演示</Divider>
       <Expander summary="IPC 调用与日志(独立预览时由 mock 宿主响应)">
         <div className="row" style={{ marginBottom: 10 }}>
-          <Button variant="accent" onClick={() => void inv('export_report', { rows: 200 })}>导出报表(进度推送)</Button>
-          <Button onClick={() => void inv('risky_op')}>故意失败</Button>
+          <Button variant="accent" onClick={() => void host('export_report', { rows: 200 })}>导出报表(进度推送)</Button>
+          <Button onClick={() => void host('risky_op')}>故意失败</Button>
           <Button onClick={async () => {
-            const r = await inv('ping');
-            if (r) toast({ level: 'info', title: 'ping', message: JSON.stringify(r) });
+            try {
+              const r = await host.json('ping');
+              toast({ level: 'info', title: 'ping', message: JSON.stringify(r) });
+            } catch (e) {
+              toast({ level: 'error', title: 'ping 失败', message: String(e) });
+            }
           }}>ping</Button>
           <Button variant="subtle" onClick={clearLog}>清空日志</Button>
         </div>

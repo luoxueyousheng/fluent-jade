@@ -1,11 +1,9 @@
-/* React hooks:宿主事件订阅 / 主题状态 / 业务调用 */
+/* React hooks */
 import { useEffect, useSyncExternalStore, useCallback } from 'react';
-import {
-  hasJade, host, inv, parsePayload,
-  effectiveDark, getThemeMode, getBackdrop, onThemeChange,
-} from './core';
+import { hasJade, host, inv, parsePayload } from './host';
+import { effectiveDark, getBackdrop, getThemeMode, onThemeChange } from './theme';
 
-/** 订阅宿主推送事件;卸载自动退订。payload 已做字符串 JSON 兜底解析。 */
+/** 订阅宿主推送;卸载自动退订 */
 export function useJadeEvent<T = unknown>(event: string, cb: (payload: T) => void): void {
   useEffect(() => {
     if (!hasJade) return;
@@ -13,7 +11,10 @@ export function useJadeEvent<T = unknown>(event: string, cb: (payload: T) => voi
   }, [event, cb]);
 }
 
-/** 当前明暗/材质状态(applyTheme/applyBackdrop 后自动重渲染) */
+/** @deprecated 别名,与 useJadeEvent 相同 */
+export const useHostEvent = useJadeEvent;
+
+/** 明暗 / 材质(切换后自动重渲染) */
 export function useTheme(): { dark: boolean; mode: string; backdrop: string } {
   const dark = useSyncExternalStore(onThemeChange, effectiveDark, () => false);
   const mode = useSyncExternalStore(onThemeChange, getThemeMode, () => 'system');
@@ -21,12 +22,12 @@ export function useTheme(): { dark: boolean; mode: string; backdrop: string } {
   return { dark, mode, backdrop };
 }
 
-/** 稳定引用的 host(fetch 风格);组件依赖数组里用它即可 */
+/** 组件内稳定 host 引用 */
 export function useHost(): typeof host {
   return useCallback(host, []) as typeof host;
 }
 
-/** @deprecated 用 useHost / 直接 import { host, inv } */
+/** @deprecated 用 useHost 或 import { host, inv } */
 export function useInv(): typeof inv {
   return useCallback(inv, []);
 }
