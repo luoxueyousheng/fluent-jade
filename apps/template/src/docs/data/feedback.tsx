@@ -620,7 +620,7 @@ const drawer: DocDef = {
   name: 'Drawer',
   cn: '抽屉',
   description:
-    '右侧滑出的侧栏面板:遮罩从标题栏下方开始、点遮罩或 Esc 关闭。适合详情查看、次级表单等不打断主界面的场景。',
+    '四方位滑出的侧栏面板:placement 定方位(左/右/上/下)、size 定尺寸,遮罩从标题栏下方开始、点遮罩或 Esc 关闭。适合详情查看、次级表单等不打断主界面的场景。',
   importCode: `import { Drawer } from '@fluent-react/ui';`,
   sections: [
     {
@@ -645,17 +645,68 @@ export function DrawerExample() {
   );
 }`,
     },
+    {
+      title: '方位与尺寸',
+      description:
+        'placement 从左 / 右 / 上 / 下滑出;size 定面板尺寸(left/right 为宽、top/bottom 为高),数字为像素,\'default\' = 378、\'large\' = 736。',
+      demo: <DrawerPlacementDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, Drawer } from '@fluent-react/ui';
+
+type Placement = 'left' | 'right' | 'top' | 'bottom';
+
+export function DrawerPlacementExample() {
+  const [placement, setPlacement] = useState<Placement | null>(null);
+  return (
+    <>
+      <div className="flex gap-2 flex-wrap">
+        <Button onClick={() => setPlacement('left')}>左侧</Button>
+        <Button onClick={() => setPlacement('right')}>右侧</Button>
+        <Button onClick={() => setPlacement('top')}>顶部</Button>
+        <Button onClick={() => setPlacement('bottom')}>底部</Button>
+      </div>
+      <Drawer open={placement != null} onClose={() => setPlacement(null)}
+              placement={placement ?? 'right'} size={placement === 'top' || placement === 'bottom' ? 260 : 'default'}
+              title={'从' + (placement ?? '') + '滑出'}>
+        <p className="leading-[1.7]">placement 决定滑出方位;size 也可传 'large'(736px)。</p>
+      </Drawer>
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'open', type: 'boolean', description: '受控开合(必填)。' },
     { name: 'title', type: 'string', description: '头部标题。' },
-    { name: 'width', type: 'number', default: '360', description: '面板宽度。' },
+    { name: 'placement', type: "'left' | 'right' | 'top' | 'bottom'", default: "'right'", description: '滑出方位。' },
+    { name: 'size', type: "number | 'default' | 'large'", description: "面板尺寸:left/right 为宽、top/bottom 为高;'default'=378、'large'=736。" },
+    { name: 'width', type: 'number', default: '360', description: '已并入 size,保留兼容(仅 left/right)。' },
     { name: 'children', type: 'ReactNode', description: '面板内容。' },
   ],
   events: [
     { name: 'onClose', type: '() => void', description: '请求关闭(遮罩点击 / Esc / 关闭钮)。' },
   ],
 };
+
+function DrawerPlacementDemo() {
+  const [placement, setPlacement] = useState<'left' | 'right' | 'top' | 'bottom' | null>(null);
+  return (
+    <>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Button onClick={() => setPlacement('left')}>左侧</Button>
+        <Button onClick={() => setPlacement('right')}>右侧</Button>
+        <Button onClick={() => setPlacement('top')}>顶部</Button>
+        <Button onClick={() => setPlacement('bottom')}>底部</Button>
+      </div>
+      <Drawer open={placement != null} onClose={() => setPlacement(null)}
+              placement={placement ?? 'right'} size={placement === 'top' || placement === 'bottom' ? 260 : 'default'}
+              title={`从${placement === 'left' ? '左侧' : placement === 'top' ? '顶部' : placement === 'bottom' ? '底部' : '右侧'}滑出`}>
+        <p style={{ color: 'var(--text-2)', lineHeight: 1.7 }}>placement 决定滑出方位;size 也可传 'large'(736px)。</p>
+      </Drawer>
+    </>
+  );
+}
 
 function DrawerDemo() {
   const [open, setOpen] = useState(false);

@@ -1009,16 +1009,19 @@ html[data-inactive] .accent-text { filter: saturate(0.6); }
 .numberbox .nb-spin button:active > * { opacity: .7; }
 .numberbox .nb-spin button:disabled { color: var(--text-disabled); background: transparent; }
 
-/* Drawer:右侧滑出面板(复用 .smoke 遮罩) */
+/* Drawer:四方位滑出面板(复用 .smoke 遮罩;方位由 data-placement 决定) */
 .drawer-smoke { display: block; }
 .drawer {
-  position: absolute; top: 0; right: 0; bottom: 0;
-  background: var(--bg); border-left: 1px solid var(--stroke);
+  position: absolute;
+  background: var(--bg);
   box-shadow: var(--shadow-32);
   display: flex; flex-direction: column;
-  transform: translateX(100%);
   transition: transform var(--slow) var(--fluent-decelerate);
 }
+.drawer[data-placement="right"] { top: 0; right: 0; bottom: 0; border-left: 1px solid var(--stroke); transform: translateX(100%); }
+.drawer[data-placement="left"] { top: 0; left: 0; bottom: 0; border-right: 1px solid var(--stroke); transform: translateX(-100%); }
+.drawer[data-placement="top"] { top: 0; left: 0; right: 0; border-bottom: 1px solid var(--stroke); transform: translateY(-100%); }
+.drawer[data-placement="bottom"] { bottom: 0; left: 0; right: 0; border-top: 1px solid var(--stroke); transform: translateY(100%); }
 .smoke.open .drawer { transform: none; }
 .drawer-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -1838,8 +1841,9 @@ button.settings-card:active > * { opacity: .85; }
 /* ---- 43. CheckboxGroup / Checkbox 半选 / Table 扩展(选择列/斑马纹/紧凑) ---- */
 .check-group { display: flex; gap: var(--sp-l); flex-wrap: wrap; }
 .check-group.vertical { flex-direction: column; gap: var(--sp-s); }
-.check input:indeterminate + .box { background: var(--accent); border-color: var(--accent); }
-.check input:indeterminate + .box svg { opacity: 1; transform: scale(1); }
+/* 限定 checkbox:radio 无选中项时整组命中 :indeterminate,不能沾染 */
+.check input[type="checkbox"]:indeterminate + .box { background: var(--accent); border-color: var(--accent); }
+.check input[type="checkbox"]:indeterminate + .box svg { opacity: 1; transform: scale(1); }
 .check input:disabled + .box { opacity: 0.45; }
 .check:has(input:disabled) { cursor: default; color: var(--text-disabled); }
 
@@ -1911,7 +1915,9 @@ button.settings-card:active > * { opacity: .85; }
 .check-card:hover { background: var(--fill-subtle); }
 .check-card:active { background: var(--fill-secondary); }
 .check-card .box { margin-top: 1px; flex-shrink: 0; }
-.check-card:has(input:checked), .check-card:has(input:indeterminate) {
+/* 半选须限定 checkbox:radio 分组内无选中项时会整组命中 :indeterminate,
+   未选中的单卡 radio 会被误判成选中态 */
+.check-card:has(input:checked), .check-card:has(input[type="checkbox"]:indeterminate) {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 7%, var(--card));
 }
