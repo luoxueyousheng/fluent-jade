@@ -5,6 +5,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
   type ReactNode,
+  type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../focusTrap';
@@ -12,6 +13,8 @@ import { cn } from '../cn';
 import { Icon } from './Icon';
 import { Button } from './Button';
 import { _bindImperative } from '../imperative';
+
+export type ToastPlacement = 'topLeft' | 'top' | 'topRight' | 'bottomLeft' | 'bottom' | 'bottomRight';
 
 export interface ToastOptions {
   level?: 'info' | 'success' | 'warning' | 'error';
@@ -21,6 +24,8 @@ export interface ToastOptions {
   id?: string;
   action?: { label: string; command?: string };
   onAction?: (command?: string) => void;
+  /** 弹出位置;缺省取 FluentProvider 的 toastPlacement(bottomRight) */
+  placement?: ToastPlacement;
 }
 
 export interface ConfirmOptions {
@@ -55,8 +60,13 @@ const DEFAULT_DURATION = { info: 5000, success: 5000, warning: 5000, error: 5000
 interface ToastItem extends ToastOptions {
   key: number;
   level: NonNullable<ToastOptions['level']>;
+  /** 解析后的自动关闭毫秒(0 = 常驻),驱动进度条 */
+  autoMs: number;
+  placement: ToastPlacement;
   closing?: boolean;
 }
+
+const PLACEMENTS: ToastPlacement[] = ['topLeft', 'top', 'topRight', 'bottomLeft', 'bottom', 'bottomRight'];
 
 interface ConfirmState extends Required<Pick<ConfirmOptions, 'title' | 'buttons' | 'defaultId'>> {
   message?: string; danger?: boolean; open: boolean;
@@ -65,7 +75,13 @@ interface ConfirmState extends Required<Pick<ConfirmOptions, 'title' | 'buttons'
 
 let seq = 0;
 
-export function FluentProvider({ children }: { children: ReactNode }) {
+export interface FluentProviderProps {
+  children: ReactNode;
+  /** Toast 默认弹出位置(每条可用 options.placement 覆盖) */
+  toastPlacement?: ToastPlacement;
+}
+
+export function FluentProvider({ children, toastPlacement = 'bottomRight' }: FluentProviderProps) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef(new Map<number, { timer: number; remaining: number; started: number }>());
   const [dlg, setDlg] = useState<ConfirmState | null>(null);
@@ -100,10 +116,10 @@ export function FluentProvider({ children }: { children: ReactNode }) {
         const t = timers.current.get(oldest.key); if (t) clearTimeout(t.timer);
         next = next.slice(1);
       }
-      return [...next, { ...opts, level, key }];
+      return [...next, { ...opts, level, key, autoMs: duration, placement: opts.placement ?? toastPlacement }];
     });
     arm(key, duration);
-  }, [arm]);
+  }, [arm, toastPlacement]);
 
   const confirm = useCallback((opts: ConfirmOptions) => {
     return new Promise<number>((resolve) => {
@@ -149,31 +165,44 @@ export function FluentProvider({ children }: { children: ReactNode }) {
     <FluentCtx.Provider value={value}>
       {children}
       {createPortal(
-        <div className="toast-host" role="status" aria-live="polite">
-          {toasts.map((t) => (
-            <div key={t.key}
-                 className={cn('toast', t.level, t.closing && 'toast-out')}
-                 aria-live={t.level === 'error' ? 'assertive' : undefined}
-                 onMouseEnter={() => pause(t.key)} onMouseLeave={() => resume(t.key)}>
-              <Icon name={t.level} strokeWidth={1.6} />
-              <div className="body">
-                {t.title && <div className="title">{t.title}</div>}
-                <div className="msg">{t.message}</div>
-                {t.action && (
-                  <div className="act">
-                    <Button variant="subtle" style={{ height: 28 }}
-                            onClick={() => { t.onAction?.(t.action!.command); dismiss(t.key); }}>
-                      {t.action.label}
-                    </Button>
+        <>
+          {PLACEMENTS.map((pl) => {
+            const list = toasts.filter((t) => t.placement === pl);
+            if (!list.length) return null;
+            return (
+              <div key={pl} className="toast-host" data-placement={pl} role="status" aria-live="polite">
+                {list.map((t) => (
+                  <div key={t.key}
+                       className={cn('toast', t.level, t.closing && 'toast-out')}
+                       aria-live={t.level === 'error' ? 'assertive' : undefined}
+                       onMouseEnter={() => pause(t.key)} onMouseLeave={() => resume(t.key)}>
+                    <Icon name={t.level} strokeWidth={1.6} />
+                    <div className="body">
+                      {t.title && <div className="title">{t.title}</div>}
+                      <div className="msg">{t.message}</div>
+                      {t.action && (
+                        <div className="act">
+                          <Button variant="subtle" style={{ height: 28 }}
+                                  onClick={() => { t.onAction?.(t.action!.command); dismiss(t.key); }}>
+                            {t.action.label}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <button className="close" aria-label="关闭" onClick={() => dismiss(t.key)}>
+                      <Icon name="close" size={12} strokeWidth={1.3} />
+                    </button>
+                    {/* 自动关闭进度:CSS 动画耗尽;悬停 animation-play-state 暂停,与 JS 计时同步 */}
+                    {t.autoMs > 0 && !t.closing && (
+                      <i className="toast-progress"
+                         style={{ '--toast-dur': `${t.autoMs}ms` } as CSSProperties} />
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-              <button className="close" aria-label="关闭" onClick={() => dismiss(t.key)}>
-                <Icon name="close" size={12} strokeWidth={1.3} />
-              </button>
-            </div>
-          ))}
-        </div>,
+            );
+          })}
+        </>,
         document.body,
       )}
       {dlg && createPortal(

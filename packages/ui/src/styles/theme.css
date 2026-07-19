@@ -697,10 +697,18 @@ html[data-inactive] .accent-text { filter: saturate(0.6); }
 
 /* ---- 16. Toast（右下角堆叠）---- */
 .toast-host {
-  position: fixed; right: 16px; bottom: 16px; z-index: 2000;
+  position: fixed; z-index: 2000;
   display: flex; flex-direction: column-reverse; gap: var(--sp-s);
   pointer-events: none;
 }
+.toast-host[data-placement="bottomRight"] { right: 16px; bottom: 16px; }
+.toast-host[data-placement="bottomLeft"]  { left: 16px; bottom: 16px; }
+.toast-host[data-placement="bottom"]      { left: 50%; bottom: 16px; transform: translateX(-50%); }
+/* 顶部方位:新条在上,列向下堆;52px 让出标题栏 */
+.toast-host[data-placement^="top"] { flex-direction: column; }
+.toast-host[data-placement="topRight"] { right: 16px; top: 52px; }
+.toast-host[data-placement="topLeft"]  { left: 16px; top: 52px; }
+.toast-host[data-placement="top"]      { left: 50%; top: 52px; transform: translateX(-50%); }
 .toast {
   display: flex; gap: var(--sp-m); width: 340px; padding: var(--sp-m) 14px;
   border-radius: var(--r-window);
@@ -1984,5 +1992,20 @@ html[data-inactive] .tb-cap { color: var(--text-3); }
 
 /* ---- 49. AppShell:single 模式内容区直接作第二网格行 ---- */
 .app > .content { min-height: 0; }
+
+
+/* ---- 50. Toast 自动关闭进度条 ---- */
+.toast { position: relative; overflow: hidden; }
+.toast-progress {
+  position: absolute; left: 0; bottom: 0; width: 100%; height: 3px;
+  transform-origin: left; background: var(--accent); opacity: 0.85;
+  animation: toast-deplete var(--toast-dur, 5000ms) linear forwards;
+}
+/* 悬停暂停:与 Provider 的 JS 计时暂停同一触发,进度与剩余时间保持同步 */
+.toast:hover .toast-progress { animation-play-state: paused; }
+.toast.success .toast-progress { background: var(--success); }
+.toast.warning .toast-progress { background: var(--caution); }
+.toast.error   .toast-progress { background: var(--critical); }
+@keyframes toast-deplete { to { transform: scaleX(0); } }
 
 }

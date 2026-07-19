@@ -82,15 +82,72 @@ export function MessageNotificationExample() {
   );
 }`,
     },
+    {
+      title: '弹出位置',
+      description: '六方位:上 / 下 × 左 / 中 / 右。每条经 placement 指定;FluentProvider 的 toastPlacement 改全局默认(缺省 bottomRight)。顶部方位自动让出标题栏,新条在上;底部方位新条在下。',
+      demo: <ToastPlacementDemo />,
+      code: `
+import { Button, useToast, type ToastPlacement } from '@fluent-react/ui';
+
+export function PlacementExample() {
+  const toast = useToast();
+  const places: ToastPlacement[] = ['topLeft', 'top', 'topRight', 'bottomLeft', 'bottom', 'bottomRight'];
+  return (
+    <>
+      {places.map((p) => (
+        <Button key={p}
+                onClick={() => toast({ level: 'info', title: p, message: '从这个方位弹出。', placement: p })}>
+          {p}
+        </Button>
+      ))}
+    </>
+  );
+}
+
+// 全局默认改到顶部居中:<FluentProvider toastPlacement="top">
+// 命令式同样支持:notification.info({ message: '标题', description: '内容', placement: 'topRight' });`,
+    },
+    {
+      title: '自动关闭进度',
+      description: '底部 3px 进度条随剩余时间耗尽(等级同色);悬停时与计时一起暂停、移出继续。常驻条(带 action 或 duration=0)不显示进度。',
+      demo: <ToastProgressDemo />,
+      code: `
+import { Button, useToast } from '@fluent-react/ui';
+
+export function AutoCloseProgressExample() {
+  const toast = useToast();
+  return (
+    <>
+      {/* 8 秒:观察底部进度条;悬停暂停,移出继续 */}
+      <Button onClick={() => toast({ level: 'success', title: '已保存', message: '悬停我暂停计时。', duration: 8000 })}>
+        8 秒自动关闭
+      </Button>
+      {/* 带 action 常驻:无进度条 */}
+      <Button onClick={() => toast({ level: 'warning', title: '发现新版本', message: '常驻等待处理。', action: { label: '更新' } })}>
+        常驻(无进度)
+      </Button>
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'level', type: "'info' | 'success' | 'warning' | 'error'", default: "'info'", description: '语义级别。' },
     { name: 'title', type: 'string', description: '标题行。' },
     { name: 'message', type: 'string', description: '正文(必填)。' },
-    { name: 'duration', type: 'number', default: '5000', description: '自动关闭毫秒;含 action 时忽略并常驻。' },
+    { name: 'duration', type: 'number', default: '5000', description: '自动关闭毫秒(带进度条);含 action 时忽略并常驻。' },
+    { name: 'placement', type: "'topLeft' | 'top' | 'topRight' | 'bottomLeft' | 'bottom' | 'bottomRight'", default: 'Provider 的 toastPlacement', description: '弹出位置。' },
     { name: 'id', type: 'string', description: '同 id 的 Toast 覆盖旧条(去重)。' },
     { name: 'action', type: '{ label: string; command?: string }', description: '操作按钮。' },
     { name: 'onAction', type: '(command?: string) => void', description: '操作按钮点击。' },
+  ],
+  extraApis: [
+    {
+      title: 'FluentProvider Props',
+      rows: [
+        { name: 'toastPlacement', type: 'ToastPlacement', default: "'bottomRight'", description: 'Toast 全局默认弹出位置。' },
+      ],
+    },
   ],
 };
 
@@ -104,6 +161,36 @@ function ToastDemo() {
         level: 'warning', title: '发现新版本', message: '是否立即更新?',
         action: { label: '更新' }, onAction: () => t({ level: 'info', message: '开始更新…' }),
       })}>带操作</Button>
+    </>
+  );
+}
+
+const TOAST_PLACES = ['topLeft', 'top', 'topRight', 'bottomLeft', 'bottom', 'bottomRight'] as const;
+
+function ToastPlacementDemo() {
+  const t = useToast();
+  return (
+    <>
+      {TOAST_PLACES.map((p) => (
+        <Button key={p}
+                onClick={() => t({ level: 'info', title: p, message: '从这个方位弹出。', placement: p })}>
+          {p}
+        </Button>
+      ))}
+    </>
+  );
+}
+
+function ToastProgressDemo() {
+  const t = useToast();
+  return (
+    <>
+      <Button onClick={() => t({ level: 'success', title: '已保存', message: '悬停我暂停计时。', duration: 8000 })}>
+        8 秒自动关闭
+      </Button>
+      <Button onClick={() => t({ level: 'warning', title: '发现新版本', message: '常驻等待处理。', action: { label: '更新' } })}>
+        常驻(无进度)
+      </Button>
     </>
   );
 }

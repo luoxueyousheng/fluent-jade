@@ -13,7 +13,7 @@ export { CheckboxGroup, type CheckboxGroupProps } from './components/CheckboxGro
 export { SwitchGroup, type SwitchGroupProps } from './components/SwitchGroup';
 export {
   FluentProvider, useToast, useConfirm,
-  type ToastOptions, type ConfirmOptions,
+  type ToastOptions, type ConfirmOptions, type ToastPlacement, type FluentProviderProps,
 } from './components/FluentProvider';
 export { NavView, type NavViewProps, type NavItemDef, type NavEntry, type NavHeaderDef } from './components/NavView';
 export { Breadcrumb, type BreadcrumbProps, type BreadcrumbItem } from './components/Breadcrumb';
