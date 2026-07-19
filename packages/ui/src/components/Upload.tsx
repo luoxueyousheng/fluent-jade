@@ -4,7 +4,7 @@
  * ⚠️ JadeView 真机注意:宿主一旦注册 drag-drop 事件即接管拖拽,页面收不到
  * 原生 DOM drop——此时应由宿主经 IPC 转发路径,前端走业务逻辑;本组件的
  * DOM 拖放适用于浏览器预览与未注册 drag-drop 的宿主。点击选择始终可用。 */
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cn } from '../cn';
 import { Icon } from './Icon';
 import { ProgressBar } from './Basics';
@@ -40,6 +40,9 @@ export interface UploadProps {
   /** 自定义上传(不传则文件仅收集,直接 done——桌面应用常态) */
   customRequest?: (options: UploadRequestOptions) => void;
   onRemove?: (file: UploadFile) => void;
+  /** 上传成功后自动移除该文件的状态行:true = 2000ms,或自定义毫秒数;
+   *  仅移除 done 项(error 保留待用户处理),移除走 onChange、不触发 onRemove */
+  autoDismiss?: boolean | number;
   showFileList?: boolean;
   children?: ReactNode;
   className?: string;
@@ -69,6 +72,18 @@ function useUploadCore(props: UploadProps) {
     commit(next, changed);
   };
 
+  /* 成功后自动移除状态行(卸载时清空未触发的计时器) */
+  const dismissMs = props.autoDismiss === true ? 2000 : typeof props.autoDismiss === 'number' ? props.autoDismiss : 0;
+  const timersRef = useRef<number[]>([]);
+  useEffect(() => () => timersRef.current.forEach(clearTimeout), []);
+  const scheduleDismiss = (uid: string) => {
+    if (dismissMs <= 0) return;
+    timersRef.current.push(window.setTimeout(() => {
+      const f = listRef.current.find((x) => x.uid === uid);
+      if (f?.status === 'done') commit(listRef.current.filter((x) => x.uid !== uid), f);
+    }, dismissMs));
+  };
+
   const addFiles = async (files: File[]) => {
     if (disabled) return;
     for (const f of files) {
@@ -83,10 +98,11 @@ function useUploadCore(props: UploadProps) {
         percent: 0, raw: f,
       };
       commit([...listRef.current, uf], uf);
+      if (!customRequest) scheduleDismiss(uf.uid);
       customRequest?.({
         file: f,
         onProgress: (percent) => patch(uf.uid, { percent }),
-        onSuccess: () => patch(uf.uid, { status: 'done', percent: 100 }),
+        onSuccess: () => { patch(uf.uid, { status: 'done', percent: 100 }); scheduleDismiss(uf.uid); },
         onError: () => patch(uf.uid, { status: 'error' }),
       });
     }

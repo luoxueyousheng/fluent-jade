@@ -1206,6 +1206,41 @@ export function DraggerExample() {
 }`,
     },
     {
+      title: '成功后自动移除状态',
+      description:
+        'autoDismiss 让上传成功的文件行自动消失:true = 2000ms,数字为自定义毫秒数。只移除 done 项(error 保留待用户处理),移除经 onChange 通知、不触发 onRemove。适合"传完即走"的反馈场景,失败行仍会留下。',
+      demo: (
+        <div style={{ width: 360 }}>
+          <Upload.Dragger customRequest={fakeRequest} autoDismiss={1500}
+                          hint="拖入文件,成功 1.5s 后状态行自动消失" />
+        </div>
+      ),
+      code: `
+import { Upload, type UploadRequestOptions } from '@fluent-react/ui';
+
+// 模拟一次带进度的上传
+const fakeRequest = ({ onProgress, onSuccess }: UploadRequestOptions) => {
+  let p = 0;
+  const t = setInterval(() => {
+    p += 20;
+    if (p >= 100) { clearInterval(t); onSuccess(); } else onProgress(p);
+  }, 180);
+};
+
+export function AutoDismissExample() {
+  return (
+    <div className="w-[360px]">
+      {/* 成功 1.5s 后自动移除状态行;autoDismiss 也可传 true(2000ms) */}
+      <Upload.Dragger
+        customRequest={fakeRequest}
+        autoDismiss={1500}
+        hint="拖入文件,成功 1.5s 后状态行自动消失"
+      />
+    </div>
+  );
+}`,
+    },
+    {
       title: '受控列表与事件',
       description:
         'fileList 完全受控:在 onChange 里把回调的 fileList 写回 state 即接受变更。UploadFile 结构 { uid, name, size, status, percent, raw }:预置行手工构造(无 raw),经 DOM 选择的行带 raw 原始 File;accept 过滤可选类型,onRemove 在移除文件行时触发。',
@@ -1286,6 +1321,7 @@ export function ListModesExample() {
     { name: 'maxCount', type: 'number', description: '数量上限,超出忽略。' },
     { name: 'beforeUpload', type: '(file: File) => boolean | Promise<boolean>', description: '返回 false / reject 拒收该文件。' },
     { name: 'customRequest', type: '(options: UploadRequestOptions) => void', description: '自定义传输:{ file, onProgress, onSuccess, onError }。' },
+    { name: 'autoDismiss', type: 'boolean | number', default: 'false', description: '成功后自动移除该文件行:true = 2000ms,数字为毫秒数;error 行保留。' },
     { name: 'showFileList', type: 'boolean', default: 'true', description: '显示文件行列表。' },
     { name: 'disabled', type: 'boolean', default: 'false', description: '禁用。' },
   ],
