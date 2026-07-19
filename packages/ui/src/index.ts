@@ -63,3 +63,4 @@ export { TitleBar, Reveal, type TitleBarProps, type WindowController } from './c
 export { AppShell, type AppShellProps } from './components/AppShell';
 export { SettingsCard, SettingsExpander, type SettingsCardProps, type SettingsExpanderProps } from './components/SettingsCard';
 export { useFocusTrap } from './focusTrap';
+export { installScrollIndicators } from './scrollIndicator';

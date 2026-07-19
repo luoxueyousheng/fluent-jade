@@ -13,6 +13,7 @@ import { cn } from '../cn';
 import { Icon } from './Icon';
 import { Button } from './Button';
 import { _bindImperative } from '../imperative';
+import { installScrollIndicators } from '../scrollIndicator';
 
 export type ToastPlacement = 'topLeft' | 'top' | 'topRight' | 'bottomLeft' | 'bottom' | 'bottomRight';
 
@@ -154,6 +155,8 @@ export function FluentProvider({ children, toastPlacement = 'bottomRight' }: Flu
   useFocusTrap(dlgRef, !!dlg?.open);   // 确认框焦点陷阱
 
   const value = useMemo<Ctx>(() => ({ toast, confirm }), [toast, confirm]);
+
+  useEffect(() => { installScrollIndicators(); }, []);   // WinUI 滚动指示器(滚动时显隐)
 
   // 命令式 API(message/notification/modal)绑定到本 Provider
   useEffect(() => {

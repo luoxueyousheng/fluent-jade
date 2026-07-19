@@ -219,9 +219,10 @@ body {
   background: transparent; border-radius: 5px;
   border: 3px solid transparent; background-clip: padding-box;   /* 10px 占位内 4px 细条 */
 }
-/* 悬停滚动容器(指针在区域内)才浮现;导航与全局同一行为 */
-:hover::-webkit-scrollbar-thumb { background-color: rgba(128, 128, 128, 0.55); background-clip: padding-box; }
-/* 指针进入滚动条:滑块变宽(8px)并加深 */
+/* WinUI 逻辑:滑块只在「正在滚动」时出现(FluentProvider 安装的全局监听打 sb-active,
+   静止 900ms 移除);指针停在内容区内不显示 */
+.sb-active::-webkit-scrollbar-thumb { background-color: rgba(128, 128, 128, 0.55); background-clip: padding-box; }
+/* 指针压到滚动条轨道:直接浮现、变宽(8px)并加深(透明滑块仍可命中) */
 ::-webkit-scrollbar-thumb:hover { background-color: rgba(128, 128, 128, 0.75); background-clip: padding-box; border-width: 1px; }
 ::-webkit-scrollbar-thumb:active { background-color: rgba(128, 128, 128, 0.9); background-clip: padding-box; border-width: 1px; }
 
