@@ -60,4 +60,5 @@ export { Spin, type SpinProps } from './components/Spin';
 export { CommandBar, MenuBar, type CommandBarProps, type CommandItemDef, type MenuBarProps, type MenuBarMenu } from './components/CommandBar';
 export { LogPane, useLog, type LogEntry } from './components/LogPane';
 export { TitleBar, Reveal, type TitleBarProps, type WindowController } from './components/TitleBar';
+export { AppShell, type AppShellProps } from './components/AppShell';
 export { SettingsCard, SettingsExpander, type SettingsCardProps, type SettingsExpanderProps } from './components/SettingsCard';

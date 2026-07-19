@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Icon, NavView, TitleBar, useLog, useToast, type NavEntry } from '@fluent-react/ui';
+import { AppShell, Icon, useLog, useToast, type NavEntry } from '@fluent-react/ui';
 import { init, configure, applyBackdrop, useJadeEvent, hasJade, type ToastPayload } from '@fluent-react/bridge';
 import { HomePage } from './pages/HomePage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -62,32 +62,26 @@ export function App() {
   const doc = docByKey.get(page);
   const onHost = booted && hasJade && !window.jade?._isMock;
 
+  /* AppShell 多页模式:标题栏(返回 + 汉堡)+ 侧导航 + 内容区一体;
+     真机 title-overlay 由宿主画控制钮,浏览器预览不渲染不预留 */
   return (
-    <div className="app">
-      {/* WinUI 3 标题栏:返回 + 汉堡在栏内;真机 title-overlay 由宿主画控制钮,
-          浏览器预览不渲染不预留 */}
-      <TitleBar appName="fluent-react 组件文档"
-                sub={booted ? (onHost ? 'JadeView 宿主' : '独立预览(mock)') : '启动中…'}
-                onBack={goBack} backDisabled={hist.length === 0}
-                onMenu={() => setCollapsed(!collapsed)}
-                controls={onHost ? 'host' : 'none'} />
-      <div className="shell">
-        <NavView items={NAV} value={page} onChange={navigate} collapsed={collapsed} />
-        <main className="content">
-          <div className="content-inner">
-            {/* key=page:切换即重挂载,重放入场动效;仅渲染当前页 */}
-            <section className="page active page-enter" key={page}>
-              {page === 'home' ? (
-                <HomePage entries={entries} clearLog={clear} onOpen={navigate} />
-              ) : page === 'settings' ? (
-                <SettingsPage hasBackdrop={hasBackdrop} />
-              ) : doc ? (
-                <DocPage doc={doc} />
-              ) : null}
-            </section>
-          </div>
-        </main>
-      </div>
-    </div>
+    <AppShell mode="multi"
+              appName="fluent-react 组件文档"
+              sub={booted ? (onHost ? 'JadeView 宿主' : '独立预览(mock)') : '启动中…'}
+              controls={onHost ? 'host' : 'none'}
+              onBack={goBack} backDisabled={hist.length === 0}
+              items={NAV} value={page} onChange={navigate}
+              collapsed={collapsed} onCollapsedChange={setCollapsed}>
+      {/* key=page:切换即重挂载,重放入场动效;仅渲染当前页 */}
+      <section className="page active page-enter" key={page}>
+        {page === 'home' ? (
+          <HomePage entries={entries} clearLog={clear} onOpen={navigate} />
+        ) : page === 'settings' ? (
+          <SettingsPage hasBackdrop={hasBackdrop} />
+        ) : doc ? (
+          <DocPage doc={doc} />
+        ) : null}
+      </section>
+    </AppShell>
   );
 }

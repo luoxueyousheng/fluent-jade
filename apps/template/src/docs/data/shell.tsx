@@ -1,7 +1,104 @@
-/* 文档数据:外壳 — TitleBar / NavView */
+/* 文档数据:外壳 — AppShell / TitleBar / NavView */
 import { useState } from 'react';
-import { Icon, NavView, TitleBar, useToast, type NavEntry } from '@fluent-react/ui';
+import { AppShell, Icon, NavView, TitleBar, useToast, type NavEntry } from '@fluent-react/ui';
 import type { DocDef } from '../types';
+
+const appshell: DocDef = {
+  key: 'appshell',
+  name: 'AppShell',
+  cn: '应用外壳',
+  description:
+    '标题栏 + 侧导航合并的一体化外壳,mode 控制形态:multi 多页文档(标题栏含汉堡驱动导航展开/收缩,下方侧导航 + 内容区)/ single 单页应用(仅标题栏 + 内容区,不渲染汉堡与侧导航)。返回键与 mode 解耦(传 onBack 即显示);TitleBar 的宿主能力(controls 三模式 / dragProps)原样透传。本文档站即 multi 形态。',
+  importCode: `import { AppShell, type NavEntry } from '@fluent-react/ui';`,
+  sections: [
+    {
+      title: '多页模式(multi)',
+      description: '标题栏汉堡驱动侧导航收缩;items/value/onChange 与 NavView 同约定。',
+      demo: <AppShellMultiDemo />,
+      code: `
+import { useState } from 'react';
+import { AppShell, Icon, type NavEntry } from '@fluent-react/ui';
+
+const ITEMS: NavEntry[] = [
+  { key: 'home', label: '首页', icon: <Icon name="home" /> },
+  { header: '媒体' },
+  { key: 'music', label: '音乐', icon: <Icon name="file" strokeWidth={1.3} /> },
+  { key: 'settings', label: '设置', icon: <Icon name="settings" strokeWidth={1.3} />, bottom: true },
+];
+
+export function MultiPageApp() {
+  const [page, setPage] = useState('home');
+  return (
+    <AppShell mode="multi" appName="多页应用" controls="host"
+              items={ITEMS} value={page} onChange={setPage}>
+      <h1>{page}</h1>
+    </AppShell>
+  );
+}`,
+    },
+    {
+      title: '单页模式(single)',
+      description: '不渲染汉堡与侧导航,内容区直接铺满;适合登录页、小工具、单任务窗口。',
+      demo: <AppShellSingleDemo />,
+      code: `
+import { AppShell } from '@fluent-react/ui';
+
+export function SinglePageApp() {
+  return (
+    <AppShell mode="single" appName="单页工具" sub="就绪"
+              controls={{ minimize: () => {}, close: () => {} }}>
+      <h1>内容区铺满,无侧导航</h1>
+    </AppShell>
+  );
+}`,
+    },
+  ],
+  props: [
+    { name: 'mode', type: "'multi' | 'single'", default: "'multi'", description: '多页(侧导航 + 汉堡)/ 单页(仅标题栏)。' },
+    { name: 'appName / sub / logo', type: 'string / ReactNode / ReactNode', description: '标题栏内容(透传 TitleBar)。' },
+    { name: 'controls / hostControlsWidth / maximized / dragProps', type: '同 TitleBar', description: '窗口控制三模式与拖动区注入,宿主不限语言。' },
+    { name: 'titleBarActions', type: 'ReactNode', description: '标题栏内交互元素(自动 no-drag)。' },
+    { name: 'onBack / backDisabled', type: '() => void / boolean', description: '返回键,与 mode 解耦,传入即显示。' },
+    { name: 'items / value', type: 'NavEntry[] / string', description: 'multi 模式的导航条目与当前键。' },
+    { name: 'navHeader', type: 'ReactNode', description: '导航列表上方固定插槽(如搜索框)。' },
+    { name: 'collapsed / defaultCollapsed', type: 'boolean', default: '— / false', description: '折叠态受控 / 非受控(汉堡驱动)。' },
+    { name: 'children', type: 'ReactNode', description: '内容区(自动包滚动容器)。' },
+  ],
+  events: [
+    { name: 'onChange', type: '(key: string) => void', description: '导航切换(multi 模式)。' },
+    { name: 'onCollapsedChange', type: '(collapsed: boolean) => void', description: '折叠态变化。' },
+  ],
+};
+
+function AppShellMultiDemo() {
+  const [page, setPage] = useState('home');
+  const items: NavEntry[] = [
+    { key: 'home', label: '首页', icon: <Icon name="home" /> },
+    { header: '媒体' },
+    { key: 'music', label: '音乐', icon: <Icon name="file" strokeWidth={1.3} /> },
+    { key: 'settings', label: '设置', icon: <Icon name="settings" strokeWidth={1.3} />, bottom: true },
+  ];
+  return (
+    <div style={{ height: 320, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+      <AppShell mode="multi" appName="多页应用" sub="汉堡在标题栏" controls="none"
+                items={items} value={page} onChange={setPage}>
+        <p style={{ color: 'var(--text-2)' }}>当前页:{page}(点标题栏汉堡收缩导航)</p>
+      </AppShell>
+    </div>
+  );
+}
+
+function AppShellSingleDemo() {
+  const toast = useToast();
+  return (
+    <div style={{ height: 200, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+      <AppShell mode="single" appName="单页工具" sub="无侧导航"
+                controls={{ minimize: () => toast({ level: 'info', message: '(宿主)minimize' }), close: () => toast({ level: 'warning', message: '(宿主)close' }) }}>
+        <p style={{ color: 'var(--text-2)' }}>单页模式:不渲染汉堡与侧导航,内容区铺满。</p>
+      </AppShell>
+    </div>
+  );
+}
 
 const titlebar: DocDef = {
   key: 'titlebar',
@@ -296,4 +393,4 @@ function NavViewTitleBarDemo() {
   );
 }
 
-export const shellDocs: DocDef[] = [titlebar, navview];
+export const shellDocs: DocDef[] = [appshell, titlebar, navview];

@@ -1981,4 +1981,8 @@ html[data-inactive] .tb-nav-btn { color: var(--text-3); }
 .tb-cap.close:active { background: color-mix(in srgb, #C42B1C 85%, #000); color: #fff; }
 html[data-inactive] .tb-cap { color: var(--text-3); }
 
+
+/* ---- 49. AppShell:single 模式内容区直接作第二网格行 ---- */
+.app > .content { min-height: 0; }
+
 }
