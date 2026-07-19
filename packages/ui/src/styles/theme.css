@@ -2008,4 +2008,28 @@ html[data-inactive] .tb-cap { color: var(--text-3); }
 .toast.error   .toast-progress { background: var(--critical); }
 @keyframes toast-deplete { to { transform: scaleX(0); } }
 
+
+/* ---- 52. 自绘窗口框(AppShell frame):圆角 + 边框 + 阴影 ----
+ * 宿主须创建无边框且窗口级透明的窗口;此模式与 Mica/Acrylic 互斥。 */
+.app-frame {
+  margin: var(--frame-margin, 10px);
+  height: calc(100% - 2 * var(--frame-margin, 10px));
+  border-radius: var(--frame-radius, 10px);
+  border: 1px solid var(--stroke);
+  background: var(--bg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.16);
+  overflow: hidden;            /* 标题栏与贴角控制钮随圆角裁切 */
+}
+:root[data-theme="dark"] .app-frame {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+/* 应用根 frame:页面背景转透明(圆角外露出桌面);mock 预览仍走纯色兜底 */
+html[data-frame], html[data-frame] body { background: transparent; }
+/* 遮罩收进窗框内,不漫到阴影留白区 */
+html[data-frame] .smoke {
+  inset: calc(40px + var(--frame-margin, 10px)) var(--frame-margin, 10px) var(--frame-margin, 10px);
+  border-bottom-left-radius: var(--frame-radius, 10px);
+  border-bottom-right-radius: var(--frame-radius, 10px);
+}
+
 }

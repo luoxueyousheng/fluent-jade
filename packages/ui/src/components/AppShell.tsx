@@ -3,7 +3,7 @@
  *   'single'      = 单页应用:仅标题栏 + 内容区,不渲染汉堡与侧导航。
  * 返回键与 mode 解耦:传 onBack 即显示。TitleBar 的宿主相关能力
  *(controls 三模式 / dragProps / maximized)原样透传,宿主不限语言。 */
-import { type HTMLAttributes, type ReactNode } from 'react';
+import { useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../cn';
 import { useMergedState } from '../useMergedState';
 import { TitleBar, type TitleBarProps } from './TitleBar';
@@ -12,6 +12,12 @@ import { NavView, type NavEntry } from './NavView';
 export interface AppShellProps {
   /** 'multi' 多页(侧导航 + 汉堡)/ 'single' 单页(仅标题栏) */
   mode?: 'single' | 'multi';
+  /** 自绘窗口框:圆角 + 边框 + 阴影(阴影区留白经 --frame-margin/--frame-radius 调)。
+   *  前提是宿主创建「无边框 + 窗口级透明」的窗口(窗口 alpha 透明,不是网页背景透明),
+   *  由 Web 层画整个窗框;该模式与 Mica/Acrylic 材质互斥(材质需要系统窗口参与),
+   *  bridge 侧用 ensureInit({ backdrop: false })。挂在 #root/body 直下时自动给
+   *  <html> 置 data-frame(页面背景转透明);嵌套演示不影响全局。 */
+  frame?: boolean;
 
   /* ---- 标题栏(透传 TitleBar) ---- */
   appName: string;
@@ -44,7 +50,7 @@ export interface AppShellProps {
 }
 
 export function AppShell({
-  mode = 'multi',
+  mode = 'multi', frame,
   appName, sub, logo, controls, hostControlsWidth, maximized, dragProps,
   titleBarActions, onBack, backDisabled,
   items = [], value = '', onChange,
@@ -53,6 +59,17 @@ export function AppShell({
 }: AppShellProps) {
   const multi = mode !== 'single';
   const [collapsed, setCollapsed] = useMergedState(defaultCollapsed, collapsedProp, onCollapsedChange);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  /* frame 且作为应用根挂载(#root/body 直下)→ html[data-frame]:
+     页面背景转透明,让透明窗口的圆角外露出桌面;嵌套(文档演示)不动全局 */
+  useEffect(() => {
+    const el = rootRef.current;
+    const isAppRoot = !!el?.parentElement && (el.parentElement.id === 'root' || el.parentElement === document.body);
+    if (!frame || !isAppRoot) return;
+    document.documentElement.dataset.frame = '';
+    return () => { delete document.documentElement.dataset.frame; };
+  }, [frame]);
 
   const content = (
     <main className="content">
@@ -61,7 +78,7 @@ export function AppShell({
   );
 
   return (
-    <div className={cn('app', className)}>
+    <div ref={rootRef} className={cn('app', frame && 'app-frame', className)}>
       <TitleBar appName={appName} sub={sub} logo={logo}
                 controls={controls} hostControlsWidth={hostControlsWidth}
                 maximized={maximized} dragProps={dragProps}

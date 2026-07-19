@@ -68,7 +68,11 @@ export function TitleBar({
 
   return (
     <header className={cn('title-bar', dragCls, className)}
-            style={{ ...(controls === 'host' ? { paddingRight: hostControlsWidth } : {}), ...dragStyle }}
+            style={{
+              // host 模式预留宿主按钮区;自绘控制钮贴窗口右缘(Windows 11 关闭钮贴角)
+              ...(controls === 'host' ? { paddingRight: hostControlsWidth } : selfDrawn ? { paddingRight: 0 } : {}),
+              ...dragStyle,
+            }}
             {...{ 'jade-region-drag': '' }} {...dragRest}>
       {onBack && (
         <button className="tb-nav-btn" aria-label="返回" disabled={backDisabled}
