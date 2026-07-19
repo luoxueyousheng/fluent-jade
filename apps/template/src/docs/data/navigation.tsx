@@ -1,5 +1,5 @@
 /* 文档数据:导航 — SelectorBar / Tabs / TabView / Breadcrumb / Steps / Pagination */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   Breadcrumb, Button, CommandBar, Icon, MenuBar, Pagination, SelectorBar, Steps, TabPanel, Tabs, TabView,
   useToast,
@@ -29,6 +29,7 @@ export function SelectorBarExample() {
         { key: 'recent', label: '最近', icon: <Icon name="calendar" size={14} strokeWidth={1.3} /> },
         { key: 'shared', label: '共享', icon: <Icon name="layers" size={14} strokeWidth={1.3} /> },
         { key: 'fav', label: '收藏', icon: <Icon name="home" size={14} strokeWidth={1.3} /> },
+        { key: 'archive', label: '归档', disabled: true },
       ]} />
   );
 }`,
@@ -52,6 +53,7 @@ function SelectorBarDemo() {
         { key: 'recent', label: '最近', icon: <Icon name="calendar" size={14} strokeWidth={1.3} /> },
         { key: 'shared', label: '共享', icon: <Icon name="layers" size={14} strokeWidth={1.3} /> },
         { key: 'fav', label: '收藏', icon: <Icon name="home" size={14} strokeWidth={1.3} /> },
+        { key: 'archive', label: '归档', disabled: true },
       ]} />
   );
 }
@@ -103,6 +105,26 @@ export function TabsSegmentedExample() {
   );
 }`,
     },
+    {
+      title: '下划线形态',
+      description: 'underline 为默认形态(短横杠指示条,两侧各留 12px 内缩);underline-compact 更紧凑(内缩 10px),适合卡片内分区。',
+      demo: <TabsUnderline />,
+      code: `
+import { useState } from 'react';
+import { Tabs } from '@fluent-react/ui';
+
+export function TabsUnderlineExample() {
+  const [v, setV] = useState('all');
+  const [v2, setV2] = useState('all');
+  const items = [{ key: 'all', label: '全部' }, { key: 'todo', label: '待办' }, { key: 'done', label: '已完成' }];
+  return (
+    <>
+      <Tabs variant="underline" value={v} onChange={setV} items={items} aria-label="下划线" />
+      <Tabs variant="underline-compact" value={v2} onChange={setV2} items={items} aria-label="紧凑下划线" />
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'items', type: '{ key: string; label: ReactNode; disabled?: boolean }[]', description: '标签项(必填)。' },
@@ -134,6 +156,17 @@ function TabsDemo() {
     </div>
   );
 }
+function TabsUnderline() {
+  const [v, setV] = useState('all');
+  const [v2, setV2] = useState('all');
+  const items = [{ key: 'all', label: '全部' }, { key: 'todo', label: '待办' }, { key: 'done', label: '已完成' }];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+      <Tabs variant="underline" value={v} onChange={setV} items={items} aria-label="下划线" />
+      <Tabs variant="underline-compact" value={v2} onChange={setV2} items={items} aria-label="紧凑下划线" />
+    </div>
+  );
+}
 function TabsSegmented() {
   const [v, setV] = useState('day');
   const [v2, setV2] = useState('day');
@@ -159,11 +192,12 @@ const tabview: DocDef = {
       demo: <TabViewDemo />,
       code: `
 import { useState } from 'react';
-import { TabView } from '@fluent-react/ui';
+import { Icon, TabView } from '@fluent-react/ui';
 
 export function TabViewExample() {
+  // 标签项可带 icon(渲染在标题文字左侧)
   const [tabs, setTabs] = useState([
-    { key: 't1', label: '文档 1' },
+    { key: 't1', label: '文档 1', icon: <Icon name="home" size={13} strokeWidth={1.3} /> },
     { key: 't2', label: '文档 2' },
   ]);
   const [cur, setCur] = useState('t1');
@@ -207,7 +241,10 @@ export function TabViewExample() {
 };
 
 function TabViewDemo() {
-  const [tabs, setTabs] = useState([{ key: 't1', label: '文档 1' }, { key: 't2', label: '文档 2' }]);
+  const [tabs, setTabs] = useState<{ key: string; label: string; icon?: ReactNode }[]>([
+    { key: 't1', label: '文档 1', icon: <Icon name="home" size={13} strokeWidth={1.3} /> },
+    { key: 't2', label: '文档 2' },
+  ]);
   const [cur, setCur] = useState('t1');
   const [seq, setSeq] = useState(3);
   const close = (k: string) => {
@@ -251,6 +288,7 @@ export function CommandBarExample() {
       items={[
         { key: 'add', label: '新建', icon: <Icon name="add" size={14} strokeWidth={1.6} /> },
         { key: 'upload', label: '导入', icon: <Icon name="upload" size={14} strokeWidth={1.4} /> },
+        { key: 'share', label: '共享', disabled: true, icon: <Icon name="layers" size={14} strokeWidth={1.4} /> },
         { key: 'd1', divider: true },
         { key: 'del', label: '删除', danger: true, icon: <Icon name="close" size={14} strokeWidth={1.4} /> },
       ]}
@@ -281,6 +319,7 @@ function CommandBarDemo() {
       items={[
         { key: 'add', label: '新建', icon: <Icon name="add" size={14} strokeWidth={1.6} /> },
         { key: 'upload', label: '导入', icon: <Icon name="upload" size={14} strokeWidth={1.4} /> },
+        { key: 'share', label: '共享', disabled: true, icon: <Icon name="layers" size={14} strokeWidth={1.4} /> },
         { key: 'd1', divider: true },
         { key: 'del', label: '删除', danger: true, icon: <Icon name="close" size={14} strokeWidth={1.4} /> },
       ]}
@@ -489,6 +528,27 @@ export function PaginationSizeChangerExample() {
   );
 }`,
     },
+    {
+      title: '受控用法与自定义条数',
+      description: 'current / pageSize 受控,页码与条数变化统一走 onChange;pageSizeOptions 自定义条数候选(pageSize 缺省取首项)。',
+      demo: <PaginationControlledDemo />,
+      code: `
+import { useState } from 'react';
+import { Pagination } from '@fluent-react/ui';
+
+export function PaginationControlledExample() {
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(20);
+  return (
+    <div className="flex flex-col gap-2">
+      <Pagination current={page} pageSize={size} total={200}
+                  showSizeChanger pageSizeOptions={[20, 50, 100]}
+                  onChange={(p, ps) => { setPage(p); setSize(ps); }} />
+      <p>第 {page} 页 · 每页 {size} 条</p>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'current / defaultCurrent', type: 'number', default: '— / 1', description: '受控 / 非受控当前页(1 起)。' },
@@ -501,5 +561,18 @@ export function PaginationSizeChangerExample() {
     { name: 'onChange', type: '(page: number, pageSize: number) => void', description: '页码或条数变化。' },
   ],
 };
+
+function PaginationControlledDemo() {
+  const [page, setPage] = useState(1);
+  const [size, setSize] = useState(20);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <Pagination current={page} pageSize={size} total={200}
+                  showSizeChanger pageSizeOptions={[20, 50, 100]}
+                  onChange={(p, ps) => { setPage(p); setSize(ps); }} />
+      <p style={{ color: 'var(--text-2)', fontSize: 12, margin: 0 }}>第 {page} 页 · 每页 {size} 条</p>
+    </div>
+  );
+}
 
 export const navigationDocs: DocDef[] = [selectorbar, tabs, tabview, commandbar, menubar, breadcrumb, steps, pagination];

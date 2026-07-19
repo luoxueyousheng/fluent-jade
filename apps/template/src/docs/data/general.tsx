@@ -127,6 +127,23 @@ export function IconButtonExample() {
   );
 }`,
     },
+    {
+      title: '点击事件',
+      description: 'onClick 为原生透传回调;loading / disabled 期间不会触发。',
+      demo: <ButtonClickDemo />,
+      code: `
+import { useState } from 'react';
+import { Button } from '@fluent-react/ui';
+
+export function ClickEventExample() {
+  const [count, setCount] = useState(0);
+  return (
+    <Button variant="accent" onClick={() => setCount(count + 1)}>
+      已点击 {count} 次
+    </Button>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'variant', type: "'default' | 'accent' | 'subtle' | 'link'", default: "'default'", description: '按钮变体:标准 / 主题色主按钮 / 无边框 / 链接样式。' },
@@ -141,6 +158,15 @@ export function IconButtonExample() {
     { name: 'onClick', type: '(e: MouseEvent) => void', description: '点击回调(原生透传)。' },
   ],
 };
+
+function ButtonClickDemo() {
+  const [count, setCount] = useState(0);
+  return (
+    <Button variant="accent" onClick={() => setCount(count + 1)}>
+      已点击 {count} 次
+    </Button>
+  );
+}
 
 const togglebutton: DocDef = {
   key: 'togglebutton',
@@ -194,6 +220,27 @@ export function ToggleButtonControlledExample() {
   );
 }`,
     },
+    {
+      title: '尺寸与原生点击',
+      description: 'size 与 Button 同款三档(small 24 / middle 32 / large 40px);onClick 为原生透传,与 onChange 同时触发。',
+      demo: <ToggleButtonSizesDemo />,
+      code: `
+import { useState } from 'react';
+import { ToggleButton } from '@fluent-react/ui';
+
+export function ToggleButtonSizesExample() {
+  const [clicks, setClicks] = useState(0);
+  return (
+    <>
+      <ToggleButton size="small" defaultChecked>小尺寸</ToggleButton>
+      <ToggleButton>中尺寸(默认)</ToggleButton>
+      <ToggleButton size="large" onClick={() => setClicks(clicks + 1)}>
+        大尺寸 · 点击 {clicks} 次
+      </ToggleButton>
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'checked / defaultChecked', type: 'boolean', default: '— / false', description: '受控 / 非受控按下态。' },
@@ -211,6 +258,19 @@ export function ToggleButtonControlledExample() {
 function ToggleButtonControlled() {
   const [muted, setMuted] = useState(false);
   return <ToggleButton checked={muted} onChange={setMuted}>{muted ? '已静音' : '静音'}</ToggleButton>;
+}
+
+function ToggleButtonSizesDemo() {
+  const [clicks, setClicks] = useState(0);
+  return (
+    <>
+      <ToggleButton size="small" defaultChecked>小尺寸</ToggleButton>
+      <ToggleButton>中尺寸(默认)</ToggleButton>
+      <ToggleButton size="large" onClick={() => setClicks(clicks + 1)}>
+        大尺寸 · 点击 {clicks} 次
+      </ToggleButton>
+    </>
+  );
 }
 
 const icon: DocDef = {

@@ -27,3 +27,7 @@ jobs:
           sleep 3
           BROWSER_PATH="$(command -v google-chrome || command -v chromium-browser || command -v chromium)" \
             node scripts/docsmoke.mjs
+      - name: API 示例覆盖率(每个 API 必须有示例代码)
+        run: |
+          BROWSER_PATH="$(command -v google-chrome || command -v chromium-browser || command -v chromium)" \
+            node scripts/apicoverage.mjs

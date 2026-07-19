@@ -1,7 +1,7 @@
 /* 文档数据:文本与表单 — TextBox / Field / SearchBox / AutoSuggest / Form */
 import { useState } from 'react';
 import {
-  AutoSuggest, Button, Field, Form, PasswordBox, SearchBox, TextArea, TextBox, useToast,
+  AutoSuggest, Button, Field, Form, PasswordBox, SearchBox, Switch, TextArea, TextBox, useToast,
 } from '@fluent-react/ui';
 import type { DocDef } from '../types';
 
@@ -65,13 +65,50 @@ export function TextBoxSizeStatusExample() {
 }`,
     },
     {
+      title: '原生属性透传',
+      description: '除 size / status 外的属性原样透传给原生 input:minLength / maxLength / onChange…。',
+      demo: <TextBoxNativeDemo />,
+      code: `
+import { useState } from 'react';
+import { TextBox } from '@fluent-react/ui';
+
+export function TextBoxNativeExample() {
+  const [v, setV] = useState('');
+  // minLength / maxLength 等原生属性直接透传;onChange 为原生事件签名
+  return (
+    <>
+      <TextBox
+        minLength={4}
+        maxLength={12}
+        placeholder="4~12 个字符"
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+      />
+      <span className="text-(--text-2)">已输入 {v.length} 字</span>
+    </>
+  );
+}`,
+    },
+    {
       title: 'TextArea 多行文本',
-      demo: <TextArea rows={3} placeholder="多行内容…" style={{ width: 320 }} aria-label="多行输入" />,
+      description: 'status 校验描边同样适用于 TextArea。',
+      demo: (
+        <>
+          <TextArea rows={3} placeholder="多行内容…" style={{ width: 320 }} aria-label="多行输入" />
+          <TextArea rows={3} status="error" defaultValue="内容不符合要求" style={{ width: 320 }} aria-label="多行错误" />
+        </>
+      ),
       code: `
 import { TextArea } from '@fluent-react/ui';
 
 export function TextAreaExample() {
-  return <TextArea rows={3} placeholder="多行内容…" className="w-[320px]" />;
+  return (
+    <>
+      <TextArea rows={3} placeholder="多行内容…" className="w-[320px]" />
+      {/* status 校验状态描边同样适用 */}
+      <TextArea rows={3} status="error" defaultValue="内容不符合要求" className="w-[320px]" />
+    </>
+  );
 }`,
     },
   ],
@@ -90,6 +127,17 @@ export function TextAreaExample() {
     },
   ],
 };
+
+function TextBoxNativeDemo() {
+  const [v, setV] = useState('');
+  return (
+    <>
+      <TextBox minLength={4} maxLength={12} placeholder="4~12 个字符" value={v}
+               onChange={(e) => setV(e.target.value)} aria-label="透传示例" />
+      <span style={{ color: 'var(--text-2)', fontSize: 12 }}>已输入 {v.length} 字</span>
+    </>
+  );
+}
 
 const passwordbox: DocDef = {
   key: 'passwordbox',
@@ -123,10 +171,11 @@ export function PasswordBoxBasicExample() {
     },
     {
       title: 'toggle 切换与校验状态',
-      description: 'reveal="toggle" 点击切换显隐(图标随之切换);size / status 与 TextBox 同款。',
+      description: 'reveal="toggle" 点击切换显隐(图标随之切换);reveal={false} 不渲染显隐钮;size / status 与 TextBox 同款。',
       demo: (
         <>
           <PasswordBox reveal="toggle" defaultValue="api-key-123" aria-label="切换显隐" />
+          <PasswordBox reveal={false} defaultValue="never-shown" aria-label="无显隐钮" />
           <PasswordBox status="error" defaultValue="weak" aria-label="校验失败" />
           <PasswordBox size="small" placeholder="小尺寸" aria-label="小尺寸密码" />
         </>
@@ -139,6 +188,8 @@ export function PasswordBoxToggleExample() {
     <>
       {/* 点击眼睛切换显隐,图标 eye / eyeOff 随之切换 */}
       <PasswordBox reveal="toggle" defaultValue="api-key-123" />
+      {/* reveal={false} 彻底关闭显隐钮 */}
+      <PasswordBox reveal={false} defaultValue="never-shown" />
       <PasswordBox status="error" defaultValue="weak" />
       <PasswordBox size="small" placeholder="小尺寸" />
     </>
@@ -247,6 +298,27 @@ export function SearchBoxSuggestionsExample() {
   return <SearchBox suggestions={FRUITS} placeholder="搜索水果" />;
 }`,
     },
+    {
+      title: '受控与尺寸',
+      description: 'value + onChange 受控;defaultValue 仅设非受控初值;size 三档高度。',
+      demo: <SearchBoxControlled />,
+      code: `
+import { useState } from 'react';
+import { SearchBox } from '@fluent-react/ui';
+
+export function SearchBoxControlledExample() {
+  const [kw, setKw] = useState('');
+  return (
+    <>
+      {/* 受控:value + onChange */}
+      <SearchBox value={kw} onChange={setKw} placeholder="受控搜索" />
+      {/* defaultValue 非受控初值;size 三档高度 */}
+      <SearchBox size="small" defaultValue="fluent" placeholder="小尺寸" />
+      <span className="text-(--text-2)">当前关键词:{kw || '(空)'}</span>
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'value / defaultValue', type: 'string', default: "''", description: '受控 / 非受控输入值。' },
@@ -265,6 +337,17 @@ function SearchBoxDemo() {
   return <SearchBox placeholder="搜索组件" onSubmit={(v) => toast({ level: 'info', title: '搜索', message: v || '(空)' })} />;
 }
 
+function SearchBoxControlled() {
+  const [kw, setKw] = useState('');
+  return (
+    <>
+      <SearchBox value={kw} onChange={setKw} placeholder="受控搜索" />
+      <SearchBox size="small" defaultValue="fluent" placeholder="小尺寸" />
+      <span style={{ color: 'var(--text-2)', fontSize: 12 }}>当前关键词:{kw || '(空)'}</span>
+    </>
+  );
+}
+
 const autosuggest: DocDef = {
   key: 'autosuggest',
   name: 'AutoSuggest',
@@ -275,7 +358,13 @@ const autosuggest: DocDef = {
   sections: [
     {
       title: '基础用法',
-      demo: <AutoSuggest options={FRUITS} placeholder="输入水果名" aria-label="水果" />,
+      description: 'defaultValue 设非受控初值;size 三档高度。',
+      demo: (
+        <>
+          <AutoSuggest options={FRUITS} placeholder="输入水果名" aria-label="水果" />
+          <AutoSuggest options={FRUITS} defaultValue="Mango" size="small" aria-label="初值水果" />
+        </>
+      ),
       code: `
 import { AutoSuggest } from '@fluent-react/ui';
 
@@ -283,7 +372,13 @@ import { AutoSuggest } from '@fluent-react/ui';
 const FRUITS = ['Apple', 'Apricot', 'Banana', 'Blueberry', 'Cherry', 'Grape', 'Mango', 'Peach'];
 
 export function AutoSuggestBasicExample() {
-  return <AutoSuggest options={FRUITS} placeholder="输入水果名" />;
+  return (
+    <>
+      <AutoSuggest options={FRUITS} placeholder="输入水果名" />
+      {/* defaultValue 非受控初值;size 三档高度 */}
+      <AutoSuggest options={FRUITS} defaultValue="Mango" size="small" />
+    </>
+  );
 }`,
     },
     {
@@ -366,6 +461,50 @@ export function FormBasicExample() {
   );
 }`,
     },
+    {
+      title: '值适配与自定义校验',
+      description:
+        'valuePropName 适配 checked 类控件(如 Switch);getValueFromEvent 自定义取值;Item 的 hint 显示说明;Rule 的 max / validator 声明上限与自定义校验。',
+      demo: <FormAdaptDemo />,
+      code: `
+import { Button, Form, Switch, TextBox, useToast } from '@fluent-react/ui';
+
+export function FormValueAdaptExample() {
+  const toast = useToast();
+  return (
+    <Form
+      initialValues={{ code: '', agree: false }}
+      onFinish={(values) => toast({ level: 'success', title: '提交成功', message: JSON.stringify(values) })}
+      onFinishFailed={() => toast({ level: 'error', title: '校验未通过', message: '请检查表单字段。' })}
+    >
+      <Form.Item
+        name="code"
+        label="邀请码"
+        hint="输入自动转为大写"
+        // getValueFromEvent:从 onChange 参数自定义提取值(此处顺手转大写)
+        getValueFromEvent={(e) => e.target.value.toUpperCase()}
+        rules={[
+          { max: 6, message: '最多 6 位' }, // max:字符串按长度上限校验
+          // validator:自定义校验,返回错误文本即失败
+          { validator: (v) => (!v || v === 'FLUENT' ? undefined : '邀请码无效,试试 FLUENT') },
+        ]}
+      >
+        <TextBox placeholder="FLUENT" />
+      </Form.Item>
+      {/* valuePropName="checked":向 Switch 注入 checked 而非 value */}
+      <Form.Item
+        name="agree"
+        label="协议"
+        valuePropName="checked"
+        rules={[{ validator: (v) => (v ? undefined : '需先同意协议') }]}
+      >
+        <Switch>同意用户协议</Switch>
+      </Form.Item>
+      <Button variant="accent" type="submit">提交</Button>
+    </Form>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'initialValues', type: 'Record<string, any>', default: '{}', description: '各字段初始值(按 Item 的 name 取)。' },
@@ -409,6 +548,29 @@ function FormDemo() {
       </Form.Item>
       <Form.Item name="mail" label="邮箱" rules={[{ pattern: /^\S+@\S+$/, message: '邮箱格式不正确' }]}>
         <TextBox placeholder="you@example.com" aria-label="邮箱" />
+      </Form.Item>
+      <Button variant="accent" type="submit">提交</Button>
+    </Form>
+  );
+}
+
+function FormAdaptDemo() {
+  const toast = useToast();
+  return (
+    <Form initialValues={{ code: '', agree: false }} className="doc-form"
+          onFinish={(v) => toast({ level: 'success', title: '提交成功', message: JSON.stringify(v) })}
+          onFinishFailed={() => toast({ level: 'error', title: '校验未通过', message: '请检查表单字段。' })}>
+      <Form.Item name="code" label="邀请码" hint="输入自动转为大写"
+                 getValueFromEvent={(e) => e.target.value.toUpperCase()}
+                 rules={[
+                   { max: 6, message: '最多 6 位' },
+                   { validator: (v) => (!v || v === 'FLUENT' ? undefined : '邀请码无效,试试 FLUENT') },
+                 ]}>
+        <TextBox placeholder="FLUENT" aria-label="邀请码" />
+      </Form.Item>
+      <Form.Item name="agree" label="协议" valuePropName="checked"
+                 rules={[{ validator: (v) => (v ? undefined : '需先同意协议') }]}>
+        <Switch>同意用户协议</Switch>
       </Form.Item>
       <Button variant="accent" type="submit">提交</Button>
     </Form>

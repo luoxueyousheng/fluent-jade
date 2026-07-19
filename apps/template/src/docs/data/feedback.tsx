@@ -87,7 +87,8 @@ export function MessageNotificationExample() {
       description: '六方位:上 / 下 × 左 / 中 / 右。每条经 placement 指定;FluentProvider 的 toastPlacement 改全局默认(缺省 bottomRight)。顶部方位自动让出标题栏,新条在上;底部方位新条在下。',
       demo: <ToastPlacementDemo />,
       code: `
-import { Button, useToast, type ToastPlacement } from '@fluent-react/ui';
+import type { ReactNode } from 'react';
+import { Button, FluentProvider, useToast, type ToastPlacement } from '@fluent-react/ui';
 
 export function PlacementExample() {
   const toast = useToast();
@@ -105,7 +106,12 @@ export function PlacementExample() {
 }
 
 // 全局默认改到顶部居中:<FluentProvider toastPlacement="top">
-// 命令式同样支持:notification.info({ message: '标题', description: '内容', placement: 'topRight' });`,
+// 命令式同样支持:notification.info({ message: '标题', description: '内容', placement: 'topRight' });
+
+// 应用入口处指定全局默认弹出位置(FluentProvider 的 toastPlacement):
+export function AppWithTopToasts({ children }: { children: ReactNode }) {
+  return <FluentProvider toastPlacement="top">{children}</FluentProvider>;
+}`,
     },
     {
       title: '自动关闭进度',
@@ -127,6 +133,31 @@ export function AutoCloseProgressExample() {
         常驻(无进度)
       </Button>
     </>
+  );
+}`,
+    },
+    {
+      title: '同 id 去重',
+      description: '传相同 id 的 Toast 覆盖旧条而非新增:高频事件(下载进度、重连提示)只占一个位置,计时随每次覆盖重置。',
+      demo: <ToastDedupeDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, useToast } from '@fluent-react/ui';
+
+export function ToastDedupeExample() {
+  const toast = useToast();
+  const [count, setCount] = useState(0);
+  return (
+    <Button
+      onClick={() => {
+        const next = count + 1;
+        setCount(next);
+        // 同 id 覆盖旧条(去重):连点也只占一个位置
+        toast({ id: 'sync-progress', level: 'info', title: '同步中', message: \`已触发 \${next} 次,始终只有一条。\` });
+      }}
+    >
+      连点我(同 id 去重)
+    </Button>
   );
 }`,
     },
@@ -192,6 +223,20 @@ function ToastProgressDemo() {
         常驻(无进度)
       </Button>
     </>
+  );
+}
+
+function ToastDedupeDemo() {
+  const t = useToast();
+  const [count, setCount] = useState(0);
+  return (
+    <Button onClick={() => {
+      const next = count + 1;
+      setCount(next);
+      t({ id: 'sync-progress', level: 'info', title: '同步中', message: `已触发 ${next} 次,始终只有一条。` });
+    }}>
+      连点我(同 id 去重)
+    </Button>
   );
 }
 
@@ -304,8 +349,86 @@ export function ModalLongContentExample() {
 }`,
     },
     {
+      title: '危险操作与强制交互',
+      description: 'okDanger 把确定钮标红;closable / maskClosable / keyboard 三者关掉后,遮罩、Esc 与右上角 X 均不可关闭,必须点按钮做出选择;cancelText 自定义取消文案。',
+      demo: <ModalDangerDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, Modal, useToast } from '@fluent-react/ui';
+
+export function ModalDangerExample() {
+  const [open, setOpen] = useState(false);
+  const toast = useToast();
+  return (
+    <>
+      <Button danger onClick={() => setOpen(true)}>注销账户…</Button>
+      {/* closable={false} + maskClosable={false} + keyboard={false}:只能通过按钮离开 */}
+      <Modal
+        open={open}
+        title="注销账户"
+        okText="永久注销"
+        cancelText="再想想"
+        okDanger
+        closable={false}
+        maskClosable={false}
+        keyboard={false}
+        onCancel={() => setOpen(false)}
+        onOk={() => {
+          setOpen(false);
+          toast({ level: 'success', message: '已注销。' });
+        }}
+      >
+        <p>注销后所有数据将被永久删除且无法恢复;遮罩、Esc 与右上角 X 均已禁用,请点按钮做出选择。</p>
+      </Modal>
+    </>
+  );
+}`,
+    },
+    {
+      title: '受控 loading 与 destroyOnClose',
+      description: 'confirmLoading 受控驱动确定钮 loading(不依赖 onOk 返回 Promise);destroyOnClose 关闭即卸载内容,重开时内部状态(如输入框)自动重置。',
+      demo: <ModalLoadingDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, Field, Modal, TextBox, useToast } from '@fluent-react/ui';
+
+export function ModalLoadingExample() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+  const submit = () => {
+    // confirmLoading 受控:自行掌握 loading 的起止时机
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setOpen(false);
+      toast({ level: 'success', message: '已提交。' });
+    }, 1500);
+  };
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>提交申请…</Button>
+      {/* destroyOnClose:关闭即卸载内容,重开时输入框回到初始值 */}
+      <Modal
+        open={open}
+        title="提交申请"
+        okText="提交"
+        confirmLoading={loading}
+        destroyOnClose
+        onCancel={() => setOpen(false)}
+        onOk={submit}
+      >
+        <Field label="备注">
+          <TextBox placeholder="随便输入点什么,关闭重开会被重置" className="w-full" />
+        </Field>
+      </Modal>
+    </>
+  );
+}`,
+    },
+    {
       title: 'useConfirm',
-      description: 'buttons 自定义按钮组,resolve 被点按钮的序号;danger 把首按钮标红。',
+      description: 'buttons 自定义按钮组,resolve 被点按钮的序号;danger 把首按钮标红;defaultId 指定回车默认按钮。',
       demo: <ConfirmDemo />,
       code: `
 import { Button, useConfirm, useToast } from '@fluent-react/ui';
@@ -320,6 +443,8 @@ export function ConfirmExample() {
       message: '删除后无法恢复。',
       buttons: ['删除', '取消'],
       danger: true,
+      // 回车默认落在「取消」(序号 1),避免误按回车直接删除
+      defaultId: 1,
     });
     if (i === 0) toast({ level: 'success', message: '已删除。' });
     else toast({ level: 'info', message: '已取消。' });
@@ -437,12 +562,54 @@ function ModalLong() {
   );
 }
 
+function ModalDangerDemo() {
+  const [open, setOpen] = useState(false);
+  const t = useToast();
+  return (
+    <>
+      <Button danger onClick={() => setOpen(true)}>注销账户…</Button>
+      <Modal open={open} title="注销账户" okText="永久注销" cancelText="再想想"
+             okDanger closable={false} maskClosable={false} keyboard={false}
+             onCancel={() => setOpen(false)}
+             onOk={() => { setOpen(false); t({ level: 'success', message: '已注销。' }); }}>
+        <p>注销后所有数据将被永久删除且无法恢复;遮罩、Esc 与右上角 X 均已禁用,请点按钮做出选择。</p>
+      </Modal>
+    </>
+  );
+}
+
+function ModalLoadingDemo() {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const t = useToast();
+  const submit = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setOpen(false);
+      t({ level: 'success', message: '已提交。' });
+    }, 1500);
+  };
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>提交申请…</Button>
+      <Modal open={open} title="提交申请" okText="提交" confirmLoading={loading} destroyOnClose
+             onCancel={() => setOpen(false)}
+             onOk={submit}>
+        <Field label="备注">
+          <TextBox placeholder="随便输入点什么,关闭重开会被重置" aria-label="备注" style={{ width: '100%' }} />
+        </Field>
+      </Modal>
+    </>
+  );
+}
+
 function ConfirmDemo() {
   const confirm = useConfirm();
   const t = useToast();
   return (
     <Button danger onClick={() => {
-      void confirm({ title: '删除 3 个文件?', message: '删除后无法恢复。', buttons: ['删除', '取消'], danger: true })
+      void confirm({ title: '删除 3 个文件?', message: '删除后无法恢复。', buttons: ['删除', '取消'], danger: true, defaultId: 1 })
         .then((i) => t({ level: i === 0 ? 'success' : 'info', message: i === 0 ? '已删除。' : '已取消。' }));
     }}>删除文件…</Button>
   );
@@ -641,6 +808,31 @@ export function PopoverControlledExample() {
   );
 }`,
     },
+    {
+      title: '非受控初始展开(defaultOpen)',
+      description: 'defaultOpen 让浮层挂载即展开,之后开合完全由内部状态管理(外点 / Esc / 再点锚点均生效),适合引导用户注意某个入口。',
+      demo: <PopoverDefaultOpenDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, Popover } from '@fluent-react/ui';
+
+export function PopoverDefaultOpenExample() {
+  const [mounted, setMounted] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setMounted(!mounted)}>
+        {mounted ? '卸载浮层' : '挂载 defaultOpen 浮层'}
+      </Button>
+      {mounted && (
+        // defaultOpen:挂载即展开,之后开合由内部状态管理
+        <Popover defaultOpen title="非受控浮层" content={<span>挂载即展开;点外部或按 Esc 关闭。</span>}>
+          <Button variant="subtle">锚点</Button>
+        </Popover>
+      )}
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'content', type: 'ReactNode', description: '浮层内容(必填)。' },
@@ -661,6 +853,22 @@ function PopoverControlled() {
              content={<Button size="small" onClick={() => setOpen(false)}>完成并关闭</Button>}>
       <Button onClick={() => setOpen(!open)}>受控锚点({open ? '开' : '关'})</Button>
     </Popover>
+  );
+}
+
+function PopoverDefaultOpenDemo() {
+  const [mounted, setMounted] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setMounted(!mounted)}>
+        {mounted ? '卸载浮层' : '挂载 defaultOpen 浮层'}
+      </Button>
+      {mounted && (
+        <Popover defaultOpen title="非受控浮层" content={<span>挂载即展开;点外部或按 Esc 关闭。</span>}>
+          <Button variant="subtle">锚点</Button>
+        </Popover>
+      )}
+    </>
   );
 }
 
@@ -697,6 +905,33 @@ export function TeachingTipExample() {
   );
 }`,
     },
+    {
+      title: '指向方位',
+      description: 'placement 控制气泡相对锚点的方位:默认 bottom 在锚点下方,top 时出现在上方、箭头朝下。',
+      demo: <TeachingPlacementDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, TeachingTip } from '@fluent-react/ui';
+
+export function TeachingTipPlacementExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    // placement="top":气泡出现在锚点上方,箭头朝下
+    <TeachingTip
+      open={open}
+      onClose={() => setOpen(false)}
+      placement="top"
+      title="向上指向"
+      content="placement 为 top 时气泡出现在锚点上方。"
+      actions={
+        <Button size="small" onClick={() => setOpen(false)}>关闭</Button>
+      }
+    >
+      <Button onClick={() => setOpen(true)}>上方展示</Button>
+    </TeachingTip>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'open', type: 'boolean', description: '受控开合(必填)。' },
@@ -718,6 +953,17 @@ function TeachingDemo() {
                  content="编辑将每 30 秒自动保存到本地。"
                  actions={<Button size="small" variant="accent" onClick={() => setOpen(false)}>知道了</Button>}>
       <Button onClick={() => setOpen(true)}>展示提示</Button>
+    </TeachingTip>
+  );
+}
+
+function TeachingPlacementDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <TeachingTip open={open} onClose={() => setOpen(false)} placement="top" title="向上指向"
+                 content="placement 为 top 时气泡出现在锚点上方。"
+                 actions={<Button size="small" onClick={() => setOpen(false)}>关闭</Button>}>
+      <Button onClick={() => setOpen(true)}>上方展示</Button>
     </TeachingTip>
   );
 }

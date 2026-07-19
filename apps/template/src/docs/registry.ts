@@ -29,3 +29,21 @@ export const docGroups: DocGroup[] = [
 export const docByKey: ReadonlyMap<string, DocDef> = new Map(
   docGroups.flatMap((g) => g.items).map((d) => [d.key, d]),
 );
+
+/* API 覆盖率核查用快照(scripts/apicoverage.mjs 经 headless 读取):
+ * 仅含可序列化字段——各表 API 名 + 全部示例代码文本 */
+declare global { interface Window { __DOCS__?: unknown } }
+if (typeof window !== 'undefined') {
+  window.__DOCS__ = docGroups.map((g) => ({
+    title: g.title,
+    guide: !!g.guide,
+    items: g.items.map((d) => ({
+      key: d.key,
+      name: d.name,
+      props: d.props.map((r) => r.name),
+      events: (d.events ?? []).map((r) => r.name),
+      extraApis: (d.extraApis ?? []).map((x) => ({ title: x.title, rows: x.rows.map((r) => r.name) })),
+      code: [d.importCode, ...d.sections.map((s) => s.code)].join('\n'),
+    })),
+  }));
+}

@@ -14,6 +14,7 @@ const CITY = [
 const MENU: MenuItemDef[] = [
   { key: 'open', label: '打开', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
   { key: 'copy', label: '复制', icon: <Icon name="copy" size={14} strokeWidth={1.3} /> },
+  { key: 'rename', label: '重命名', disabled: true },
   { key: 'd1', divider: true },
   { key: 'del', label: '删除', danger: true, icon: <Icon name="close" size={14} strokeWidth={1.3} /> },
 ];
@@ -28,6 +29,12 @@ const TREE: TreeDataNode[] = [
     ],
   },
   { key: 'pkg', title: 'package.json' },
+];
+
+const FILES = [
+  { value: 'button', label: 'Button.tsx', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
+  { value: 'combo', label: 'ComboBox.tsx', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
+  { value: 'readme', label: 'README.md', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
 ];
 
 const combobox: DocDef = {
@@ -90,6 +97,36 @@ export function ComboBoxControlledExample() {
       status={value ? undefined : 'warning'}
       aria-label="受控城市"
     />
+  );
+}`,
+    },
+    {
+      title: '尺寸',
+      description: 'size 三档高度:small / middle(默认)/ large。',
+      demo: (
+        <>
+          <ComboBox size="small" options={CITY} defaultValue="bj" aria-label="小组合框" />
+          <ComboBox options={CITY} defaultValue="sh" aria-label="中组合框" />
+          <ComboBox size="large" options={CITY} defaultValue="gz" aria-label="大组合框" />
+        </>
+      ),
+      code: `
+import { ComboBox } from '@fluent-react/ui';
+
+const options = [
+  { value: 'bj', label: '北京' },
+  { value: 'sh', label: '上海' },
+  { value: 'gz', label: '广州' },
+];
+
+export function ComboBoxSizeExample() {
+  return (
+    <>
+      {/* size 三档:small / middle(默认)/ large */}
+      <ComboBox size="small" options={options} defaultValue="bj" aria-label="小组合框" />
+      <ComboBox options={options} defaultValue="sh" aria-label="中组合框" />
+      <ComboBox size="large" options={options} defaultValue="gz" aria-label="大组合框" />
+    </>
   );
 }`,
     },
@@ -172,6 +209,39 @@ export function MultiSelectMaxTagExample() {
   );
 }`,
     },
+    {
+      title: '尺寸、状态与禁用',
+      description: 'size 三档最小高度;status 校验描边;disabled 整体禁用。',
+      demo: (
+        <>
+          <MultiSelect size="small" options={CITY} defaultValue={['bj']} aria-label="小多选" />
+          <MultiSelect status="error" options={CITY} defaultValue={['sh']} aria-label="错误多选" />
+          <MultiSelect disabled options={CITY} defaultValue={['gz', 'sz']} aria-label="禁用多选" />
+        </>
+      ),
+      code: `
+import { MultiSelect } from '@fluent-react/ui';
+
+const options = [
+  { value: 'bj', label: '北京' },
+  { value: 'sh', label: '上海' },
+  { value: 'gz', label: '广州' },
+  { value: 'sz', label: '深圳' },
+];
+
+export function MultiSelectStateExample() {
+  return (
+    <>
+      {/* size 三档最小高度(Tag 多时自动换行长高) */}
+      <MultiSelect size="small" options={options} defaultValue={['bj']} aria-label="小多选" />
+      {/* status 校验状态描边 */}
+      <MultiSelect status="error" options={options} defaultValue={['sh']} aria-label="错误多选" />
+      {/* disabled 整体禁用 */}
+      <MultiSelect disabled options={options} defaultValue={['gz', 'sz']} aria-label="禁用多选" />
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'options', type: '{ value: string; label: ReactNode }[]', description: '候选项(必填)。' },
@@ -248,6 +318,30 @@ export function ListBoxMultiExample() {
   );
 }`,
     },
+    {
+      title: '带图标',
+      description: 'items 的 icon 字段渲染为行内前置图标。',
+      demo: <ListIcon />,
+      code: `
+import { useState } from 'react';
+import { Icon, ListBox } from '@fluent-react/ui';
+
+// items 的 icon 字段渲染为前置图标
+const files = [
+  { value: 'button', label: 'Button.tsx', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
+  { value: 'combo', label: 'ComboBox.tsx', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
+  { value: 'readme', label: 'README.md', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
+];
+
+export function ListBoxIconExample() {
+  const [value, setValue] = useState<string | null>('button');
+  return (
+    <div className="w-[220px]">
+      <ListBox items={files} value={value} onChange={setValue} />
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'items', type: '{ value: string; label: ReactNode; icon?: ReactNode }[]', description: '列表项(必填)。' },
@@ -266,6 +360,10 @@ function ListSingle() {
 function ListMulti() {
   const [v, setV] = useState<string[]>(['bj']);
   return <div style={{ width: 200 }}><ListBox multi items={CITY} value={v} onChange={setV} /></div>;
+}
+function ListIcon() {
+  const [v, setV] = useState<string | null>('button');
+  return <div style={{ width: 220 }}><ListBox items={FILES} value={v} onChange={setV} /></div>;
 }
 
 const dropdown: DocDef = {
@@ -286,6 +384,7 @@ import { DropDownButton, Icon, useToast, type MenuItemDef } from '@fluent-react/
 const items: MenuItemDef[] = [
   { key: 'open', label: '打开', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
   { key: 'copy', label: '复制', icon: <Icon name="copy" size={14} strokeWidth={1.3} /> },
+  { key: 'rename', label: '重命名', disabled: true }, // disabled 禁用项(不可点)
   { key: 'd1', divider: true }, // divider 渲染为分隔线
   { key: 'del', label: '删除', danger: true, icon: <Icon name="close" size={14} strokeWidth={1.3} /> },
 ];
@@ -319,6 +418,7 @@ import { ContextMenuArea, Icon, useToast, type MenuItemDef } from '@fluent-react
 const items: MenuItemDef[] = [
   { key: 'open', label: '打开', icon: <Icon name="file" size={14} strokeWidth={1.3} /> },
   { key: 'copy', label: '复制', icon: <Icon name="copy" size={14} strokeWidth={1.3} /> },
+  { key: 'rename', label: '重命名', disabled: true }, // disabled 禁用项(不可点)
   { key: 'd1', divider: true },
   { key: 'del', label: '删除', danger: true, icon: <Icon name="close" size={14} strokeWidth={1.3} /> },
 ];
@@ -433,6 +533,55 @@ export function TreeBasicExample() {
   );
 }`,
     },
+    {
+      title: '受控展开与选中',
+      description: 'expandedKeys / selectedKeys 受控(配 onExpand / onSelect 回写);defaultExpandedKeys / defaultSelectedKeys 仅设初值。',
+      demo: <TreeControlledDemo />,
+      code: `
+import { useState } from 'react';
+import { Tree, type TreeDataNode } from '@fluent-react/ui';
+
+const treeData: TreeDataNode[] = [
+  {
+    key: 'src', title: 'src',
+    children: [
+      { key: 'components', title: 'components', children: [
+        { key: 'button', title: 'Button.tsx' },
+        { key: 'combo', title: 'ComboBox.tsx' },
+      ]},
+      { key: 'index', title: 'index.ts' },
+    ],
+  },
+  { key: 'pkg', title: 'package.json' },
+];
+
+export function TreeControlledExample() {
+  // 受控:expandedKeys / selectedKeys 由外部持有,经 onExpand / onSelect 回写
+  const [expanded, setExpanded] = useState<string[]>(['src']);
+  const [selected, setSelected] = useState<string[]>(['index']);
+  return (
+    <div className="flex flex-wrap gap-6">
+      <div className="w-[240px]">
+        <Tree
+          treeData={treeData}
+          expandedKeys={expanded}
+          onExpand={setExpanded}
+          selectedKeys={selected}
+          onSelect={(keys) => setSelected(keys)}
+        />
+      </div>
+      {/* 非受控:default* 系仅决定初始展开 / 选中 */}
+      <div className="w-[240px]">
+        <Tree
+          treeData={treeData}
+          defaultExpandedKeys={['src', 'components']}
+          defaultSelectedKeys={['button']}
+        />
+      </div>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'treeData', type: 'TreeDataNode[]', description: '层级数据(必填):{ key, title, children?, disabled? }。' },
@@ -452,6 +601,21 @@ function TreeDemo() {
     <div style={{ width: 260 }}>
       <Tree treeData={TREE} defaultExpandAll
             onSelect={(_k, { node }) => toast({ level: 'info', title: '选中', message: String(node.title) })} />
+    </div>
+  );
+}
+function TreeControlledDemo() {
+  const [expanded, setExpanded] = useState<string[]>(['src']);
+  const [selected, setSelected] = useState<string[]>(['index']);
+  return (
+    <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+      <div style={{ width: 240 }}>
+        <Tree treeData={TREE} expandedKeys={expanded} onExpand={setExpanded}
+              selectedKeys={selected} onSelect={(keys) => setSelected(keys)} />
+      </div>
+      <div style={{ width: 240 }}>
+        <Tree treeData={TREE} defaultExpandedKeys={['src', 'components']} defaultSelectedKeys={['button']} />
+      </div>
     </div>
   );
 }

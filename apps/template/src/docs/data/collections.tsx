@@ -1,6 +1,6 @@
 /* 文档数据:集合 — Table / DataGrid */
 import { useState } from 'react';
-import { Button, DataGrid, Table, Tag, useToast, type ColumnType, type DataGridColumn } from '@fluent-react/ui';
+import { Button, DataGrid, Empty, Table, Tag, useToast, type ColumnType, type DataGridColumn } from '@fluent-react/ui';
 import type { DocDef } from '../types';
 
 interface Row { key: string; name: string; size: number; type: string; state: 'ok' | 'warn' }
@@ -103,6 +103,9 @@ export function TableSelectionExample() {
                getCheckboxProps: (r) => ({ disabled: r.type === '入口' }),
              }} />
       <span>已选 {keys.length} 行:{keys.join(', ') || '(无)'}</span>
+      {/* type="radio" 单选;defaultSelectedRowKeys 非受控初始选中 */}
+      <Table columns={columns} dataSource={rows.slice(0, 3)} pagination={false}
+             rowSelection={{ type: 'radio', defaultSelectedRowKeys: ['1'] }} />
     </>
   );
 }`,
@@ -211,6 +214,35 @@ export function TablePagedExample() {
   );
 }`,
     },
+    {
+      title: '自定义行键与滚动高度',
+      description: '数据没有 key 字段时,rowKey 传字段名或取键函数;maxHeight 限制表体高度,超出滚动、表头吸顶。',
+      demo: <TableRowKeyScroll />,
+      code: `
+import { Table, type ColumnType } from '@fluent-react/ui';
+
+// 数据源没有 key 字段,行键从 id 派生
+interface FileRow { id: string; name: string; size: number }
+
+const rows: FileRow[] = Array.from({ length: 12 }, (_, i) => ({
+  id: 'f-' + (i + 1),
+  name: 'file-' + (i + 1) + '.ts',
+  size: ((i * 7) % 40) + 1,
+}));
+
+const columns: ColumnType<FileRow>[] = [
+  { title: '名称', dataIndex: 'name', width: '2fr' },
+  { title: '大小 (KB)', dataIndex: 'size', align: 'right' },
+];
+
+export function TableRowKeyExample() {
+  return (
+    // rowKey 函数形式:按行返回唯一键;maxHeight 控表体滚动高
+    <Table columns={columns} dataSource={rows} pagination={false}
+           rowKey={(r) => r.id} maxHeight={200} />
+  );
+}`,
+    },
   ],
   props: [
     { name: 'columns', type: 'ColumnType<T>[]', description: '列定义(必填)。' },
@@ -261,6 +293,8 @@ function TableSelection() {
                getCheckboxProps: (r) => ({ disabled: r.type === '入口' }),
              }} />
       <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>已选 {keys.length} 行:{keys.join(', ') || '(无)'}</span>
+      <Table columns={COLS} dataSource={ROWS.slice(0, 3)} pagination={false}
+             rowSelection={{ type: 'radio', defaultSelectedRowKeys: ['1'] }} />
     </div>
   );
 }
@@ -272,6 +306,30 @@ function TableLoading() {
     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10 }}>
       <Table columns={COLS} dataSource={ROWS.slice(0, 3)} pagination={false} loading={loading} />
       <Button size="small" style={{ alignSelf: 'flex-start' }} onClick={load} disabled={loading}>模拟加载</Button>
+      <Table columns={COLS} dataSource={[]} pagination={false}
+             empty={<Empty description="没有匹配的文件" />} />
+    </div>
+  );
+}
+
+interface FileRow { id: string; name: string; size: number }
+
+const FILE_ROWS: FileRow[] = Array.from({ length: 12 }, (_, i) => ({
+  id: `f-${i + 1}`,
+  name: `file-${i + 1}.ts`,
+  size: ((i * 7) % 40) + 1,
+}));
+
+const FILE_COLS: ColumnType<FileRow>[] = [
+  { title: '名称', dataIndex: 'name', width: '2fr' },
+  { title: '大小 (KB)', dataIndex: 'size', align: 'right' },
+];
+
+function TableRowKeyScroll() {
+  return (
+    <div style={{ width: '100%' }}>
+      <Table columns={FILE_COLS} dataSource={FILE_ROWS} pagination={false}
+             rowKey={(r) => r.id} maxHeight={200} />
     </div>
   );
 }

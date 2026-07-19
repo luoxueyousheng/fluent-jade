@@ -175,6 +175,34 @@ export function SplitterVerticalExample() {
   );
 }`,
     },
+    {
+      title: '受控尺寸',
+      description: 'size + onResize 受控:拖动经 onResize 回写状态,外部按钮也可直接设宽。',
+      demo: <SplitterControlled />,
+      code: `
+import { useState } from 'react';
+import { Button, Splitter } from '@fluent-react/ui';
+
+export function SplitterControlledExample() {
+  const [size, setSize] = useState(200);
+  return (
+    <div className="flex flex-col w-full gap-2">
+      <div className="flex items-center gap-2">
+        <Button size="small" onClick={() => setSize(160)}>窄</Button>
+        <Button size="small" onClick={() => setSize(280)}>宽</Button>
+        <span className="text-(--text-2)">当前 {size}px</span>
+      </div>
+      <div className="w-full h-[180px] overflow-hidden rounded-lg border border-(--card-border)">
+        {/* size 受控:拖动经 onResize 回写,状态是唯一数据源 */}
+        <Splitter size={size} min={120} max={360} onResize={setSize}>
+          <div className="h-full p-3 bg-(--layer) text-(--text-2)">左侧面板</div>
+          <div className="p-3 text-(--text-2)">右侧面板</div>
+        </Splitter>
+      </div>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'children', type: '[ReactNode, ReactNode]', description: '恰好两个面板(必填)。' },
@@ -341,6 +369,42 @@ export function ImageFallbackExample() {
   );
 }`,
     },
+    {
+      title: '填充模式与自定义占位',
+      description: 'fit 控制 object-fit(默认 cover 铺满裁切,contain 完整显示);placeholder 替换加载中的默认骨架微光。',
+      demo: (
+        <>
+          <Image src={pic(268, 'contain')} alt="contain" width={200} height={120} fit="contain" rounded preview={false}
+                 placeholder={<span style={{ fontSize: 12, color: 'var(--text-2)' }}>载入中…</span>} />
+          <Image src={pic(320, 'cover')} alt="cover" width={200} height={120} fit="cover" rounded preview={false} />
+        </>
+      ),
+      code: `
+import { Image } from '@fluent-react/ui';
+
+const tallUrl = '/tall.png'; // 占位:替换为真实图片地址
+const wideUrl = '/wide.png';
+
+export function ImageFitExample() {
+  return (
+    <>
+      {/* fit="contain" 完整显示不裁切;placeholder 自定义加载占位节点 */}
+      <Image
+        src={tallUrl}
+        alt="contain"
+        width={200}
+        height={120}
+        fit="contain"
+        rounded
+        preview={false}
+        placeholder={<span className="text-xs text-(--text-2)">载入中…</span>}
+      />
+      {/* 默认 fit="cover":铺满并裁切 */}
+      <Image src={wideUrl} alt="cover" width={200} height={120} fit="cover" rounded preview={false} />
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'src', type: 'string', description: '图片地址(必填)。' },
@@ -382,6 +446,36 @@ export function CarouselExample() {
     <div className="w-[400px]">
       {/* autoplay 在悬停、页面隐藏或滚出视口时自动暂停 */}
       <Carousel autoplay arrows afterChange={(i) => console.log('当前页', i)}>
+        {slides.map((s, i) => (
+          <img key={i} src={s} alt={\`第 \${i + 1} 张\`} className="block w-full" />
+        ))}
+      </Carousel>
+    </div>
+  );
+}`,
+    },
+    {
+      title: '间隔、圆点与初始页',
+      description: 'autoplaySpeed 控制轮播间隔;dots={false} 隐藏圆点分页(配 arrows 保留导航);initialSlide 指定初始页。',
+      demo: (
+        <div style={{ width: 400 }}>
+          <Carousel autoplay autoplaySpeed={1500} dots={false} arrows initialSlide={1}>
+            {[pic(268, '第 1 张'), pic(320, '第 2 张'), pic(0, '第 3 张')].map((s, i) => (
+              <img key={i} src={s} alt={`第 ${i + 1} 张`} style={{ width: '100%', display: 'block' }} />
+            ))}
+          </Carousel>
+        </div>
+      ),
+      code: `
+import { Carousel } from '@fluent-react/ui';
+
+const slides = ['/slide-1.png', '/slide-2.png', '/slide-3.png']; // 占位:幻灯片图地址
+
+export function CarouselOptionsExample() {
+  return (
+    <div className="w-[400px]">
+      {/* autoplaySpeed 加快到 1.5s;dots={false} 隐藏圆点;initialSlide 从第 2 张开始 */}
+      <Carousel autoplay autoplaySpeed={1500} dots={false} arrows initialSlide={1}>
         {slides.map((s, i) => (
           <img key={i} src={s} alt={\`第 \${i + 1} 张\`} className="block w-full" />
         ))}
@@ -469,6 +563,25 @@ export function TagClosableExample() {
     { name: 'onClose', type: '() => void', description: '点击关闭键(移除由外部状态完成)。' },
   ],
 };
+
+function SplitterControlled() {
+  const [size, setSize] = useState(200);
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <Button size="small" onClick={() => setSize(160)}>窄</Button>
+        <Button size="small" onClick={() => setSize(280)}>宽</Button>
+        <span style={{ color: 'var(--text-2)' }}>当前 {size}px</span>
+      </div>
+      <div style={{ width: '100%', height: 180, border: '1px solid var(--card-border)', borderRadius: 8, overflow: 'hidden' }}>
+        <Splitter size={size} min={120} max={360} onResize={setSize}>
+          <div style={{ padding: 12, height: '100%', background: 'var(--layer)', color: 'var(--text-2)' }}>左侧面板</div>
+          <div style={{ padding: 12, color: 'var(--text-2)' }}>右侧面板</div>
+        </Splitter>
+      </div>
+    </div>
+  );
+}
 
 function TagClosable() {
   const [tags, setTags] = useState(['React 19', 'Tailwind v4', 'WinUI 3']);
@@ -652,6 +765,34 @@ export function EmptyExample() {
   );
 }`,
     },
+    {
+      title: '自定义插画',
+      description: 'image 传任意节点替换内置线稿插画(品牌插画、Icon 等)。',
+      demo: (
+        <Empty
+          image={<img src={pic(268, '插画')} alt="" width={140} style={{ borderRadius: 8 }} />}
+          description="自定义插画节点"
+        >
+          <Button size="small">刷新</Button>
+        </Empty>
+      ),
+      code: `
+import { Button, Empty } from '@fluent-react/ui';
+
+const illustrationUrl = '/empty-illustration.png'; // 占位:自定义插画地址
+
+export function EmptyCustomImageExample() {
+  // image 传任意节点替换内置插画
+  return (
+    <Empty
+      image={<img src={illustrationUrl} alt="" width={140} className="rounded-lg" />}
+      description="自定义插画节点"
+    >
+      <Button size="small">刷新</Button>
+    </Empty>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'image', type: "ReactNode | 'simple'", default: '内置插画', description: 'simple 紧凑变体或自定义插画。' },
@@ -739,13 +880,17 @@ export function TimelineBasicExample() {
     },
     {
       title: '自定义节点与进行中',
-      description: 'dot 传任意节点(如 Icon)替换默认圆点;pending 在尾部追加进行中项。',
+      description: 'dot 传任意节点(如 Icon)替换默认圆点;pending 在尾部追加进行中项,传 true 则不带文案、仅显示旋转点。',
       demo: (
-        <div style={{ width: 360 }}>
+        <div style={{ width: 360, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Timeline pending="正在重新部署…"
             items={[
               { label: '昨天 18:30', content: '版本 2.3.0 发布', dot: <Icon name="success" size={14} strokeWidth={1.4} style={{ color: '#0F7B0F' }} /> },
               { label: '今天 09:12', content: '收到 3 份崩溃报告' },
+            ]} />
+          <Timeline pending={true}
+            items={[
+              { label: '10:20', content: '触发增量构建' },
             ]} />
         </div>
       ),
@@ -754,18 +899,22 @@ import { Icon, Timeline } from '@fluent-react/ui';
 
 export function TimelinePendingExample() {
   return (
-    <Timeline
-      pending="正在重新部署…"   // 尾部进行中项:旋转圆环节点
-      items={[
-        {
-          label: '昨天 18:30',
-          content: '版本 2.3.0 发布',
-          // dot:自定义节点替换默认圆点
-          dot: <Icon name="success" size={14} strokeWidth={1.4} className="text-[#0F7B0F]" />,
-        },
-        { label: '今天 09:12', content: '收到 3 份崩溃报告' },
-      ]}
-    />
+    <div className="flex flex-col gap-4">
+      <Timeline
+        pending="正在重新部署…"   // 尾部进行中项:旋转圆环节点 + 文案
+        items={[
+          {
+            label: '昨天 18:30',
+            content: '版本 2.3.0 发布',
+            // dot:自定义节点替换默认圆点
+            dot: <Icon name="success" size={14} strokeWidth={1.4} className="text-[#0F7B0F]" />,
+          },
+          { label: '今天 09:12', content: '收到 3 份崩溃报告' },
+        ]}
+      />
+      {/* pending={true}:不带文案,仅显示旋转点 */}
+      <Timeline pending={true} items={[{ label: '10:20', content: '触发增量构建' }]} />
+    </div>
   );
 }`,
     },

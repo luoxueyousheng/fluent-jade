@@ -41,6 +41,17 @@ export function CalendarDisabledDateExample() {
   return <Calendar disabledDate={(d) => d.getDay() === 0 || d.getDay() === 6} />;
 }`,
     },
+    {
+      title: '非受控默认值',
+      description: 'defaultValue 只决定初始选中日期,之后的选择由组件内部维护,不需要外部状态。',
+      demo: <Calendar defaultValue={new Date()} />,
+      code: `import { Calendar } from '@fluent-react/ui';
+
+export function CalendarDefaultValueExample() {
+  // 非受控:defaultValue 设定初始选中,后续变化组件内部维护
+  return <Calendar defaultValue={new Date()} />;
+}`,
+    },
   ],
   props: [
     { name: 'value / defaultValue', type: 'Date | null', default: 'null', description: '受控 / 非受控选中日期。' },
@@ -111,6 +122,27 @@ export function DatePickerDisabledExample() {
   );
 }`,
     },
+    {
+      title: '受控用法与占位',
+      description: 'value + onChange 受控(点清除键回调 null);placeholder 自定义空值占位文案。',
+      demo: <DatePickerControlled />,
+      code: `import { useState } from 'react';
+import { DatePicker, formatDate } from '@fluent-react/ui';
+
+export function DatePickerControlledExample() {
+  // 受控用法:value + onChange(清除时回调 null)
+  const [d, setD] = useState<Date | null>(null);
+  return (
+    <div className="flex flex-col gap-2">
+      <DatePicker value={d} onChange={setD}
+                  placeholder="请选择生效日期" aria-label="生效日期" />
+      <span className="text-(--text-2) text-[12.5px]">
+        已选:{d ? formatDate(d) : '(未选择)'}
+      </span>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'value / defaultValue', type: 'Date | null', default: 'null', description: '受控 / 非受控值。' },
@@ -123,6 +155,19 @@ export function DatePickerDisabledExample() {
     { name: 'onChange', type: '(date: Date | null) => void', description: '选中或清除时回调。' },
   ],
 };
+
+function DatePickerControlled() {
+  const [d, setD] = useState<Date | null>(null);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <DatePicker value={d} onChange={setD}
+                  placeholder="请选择生效日期" aria-label="生效日期" />
+      <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
+        已选:{d ? formatDate(d) : '(未选择)'}
+      </span>
+    </div>
+  );
+}
 
 const rangepicker: DocDef = {
   key: 'rangepicker',
@@ -153,21 +198,35 @@ export function RangePickerBasicExample() {
     },
     {
       title: '限制与格式',
+      description: 'format 控制显示格式;disabledDate 限制可选范围;defaultValue 非受控初始区间,allowClear={false} 不显示清除键。',
       demo: (
-        <RangePicker format="MM月DD日" placeholder={['起', '止']}
-                     disabledDate={(d) => d.getTime() > Date.now()} aria-label="仅限过去" />
+        <>
+          <RangePicker format="MM月DD日" placeholder={['起', '止']}
+                       disabledDate={(d) => d.getTime() > Date.now()} aria-label="仅限过去" />
+          <RangePicker allowClear={false}
+                       defaultValue={[new Date(Date.now() - 6 * 86400000), new Date()]}
+                       aria-label="近七天" />
+        </>
       ),
       code: `import { RangePicker } from '@fluent-react/ui';
 
 export function RangePickerFormatExample() {
-  // format 控制显示格式;disabledDate 禁掉未来日期
   return (
-    <RangePicker
-      format="MM月DD日"
-      placeholder={['起', '止']}
-      disabledDate={(d) => d.getTime() > Date.now()}
-      aria-label="仅限过去"
-    />
+    <>
+      {/* format 控制显示格式;disabledDate 禁掉未来日期 */}
+      <RangePicker
+        format="MM月DD日"
+        placeholder={['起', '止']}
+        disabledDate={(d) => d.getTime() > Date.now()}
+        aria-label="仅限过去"
+      />
+      {/* defaultValue 非受控初始区间;allowClear={false} 不显示清除键 */}
+      <RangePicker
+        allowClear={false}
+        defaultValue={[new Date(Date.now() - 6 * 86400000), new Date()]}
+        aria-label="近七天"
+      />
+    </>
   );
 }`,
     },
@@ -210,6 +269,7 @@ const timepicker: DocDef = {
         <>
           <TimePicker aria-label="选择时间" />
           <TimePicker minuteStep={15} placeholder="一刻钟档位" aria-label="15 分钟步进" />
+          <TimePicker defaultValue={new Date()} aria-label="默认当前时间" />
         </>
       ),
       code: `import { TimePicker } from '@fluent-react/ui';
@@ -220,7 +280,29 @@ export function TimePickerBasicExample() {
       <TimePicker aria-label="选择时间" />
       {/* minuteStep 控制分钟列间隔 */}
       <TimePicker minuteStep={15} placeholder="一刻钟档位" aria-label="15 分钟步进" />
+      {/* defaultValue 非受控初始值(取其时分) */}
+      <TimePicker defaultValue={new Date()} aria-label="默认当前时间" />
     </>
+  );
+}`,
+    },
+    {
+      title: '受控用法',
+      description: 'value + onChange 受控;选完分钟列即提交回调。',
+      demo: <TimePickerControlled />,
+      code: `import { useState } from 'react';
+import { TimePicker, formatDate } from '@fluent-react/ui';
+
+export function TimePickerControlledExample() {
+  // 受控用法:value + onChange(选完分钟提交)
+  const [t, setT] = useState<Date | null>(null);
+  return (
+    <div className="flex flex-col gap-2">
+      <TimePicker value={t} onChange={setT} aria-label="提醒时间" />
+      <span className="text-(--text-2) text-[12.5px]">
+        已选:{t ? formatDate(t, 'HH:mm') : '(未选择)'}
+      </span>
+    </div>
   );
 }`,
     },
@@ -234,5 +316,17 @@ export function TimePickerBasicExample() {
     { name: 'onChange', type: '(date: Date | null) => void', description: '选完分钟提交时回调。' },
   ],
 };
+
+function TimePickerControlled() {
+  const [t, setT] = useState<Date | null>(null);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <TimePicker value={t} onChange={setT} aria-label="提醒时间" />
+      <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
+        已选:{t ? formatDate(t, 'HH:mm') : '(未选择)'}
+      </span>
+    </div>
+  );
+}
 
 export const datetimeDocs: DocDef[] = [calendar, datepicker, rangepicker, timepicker];

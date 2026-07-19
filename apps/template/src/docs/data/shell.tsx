@@ -1,6 +1,6 @@
 /* 文档数据:外壳 — AppShell / TitleBar / NavView */
 import { useState } from 'react';
-import { AppShell, Icon, NavView, TitleBar, useToast, type NavEntry } from '@fluent-react/ui';
+import { AppShell, Button, Icon, NavView, SearchBox, TitleBar, useToast, type NavEntry } from '@fluent-react/ui';
 import type { DocDef } from '../types';
 
 const appshell: DocDef = {
@@ -78,6 +78,105 @@ export function SinglePageApp() {
   );
 }`,
     },
+    {
+      title: '标题栏扩展(logo / 操作区 / 返回键)',
+      description: 'logo 替换内置图标;titleBarActions 放标题栏内交互元素(自动 no-drag,靠右、控制钮之前);onBack 传入即显示返回键(与 mode 解耦),backDisabled 时不占位。',
+      demo: <AppShellTitleBarExtrasDemo />,
+      code: `
+import { AppShell, Button, Icon } from '@fluent-react/ui';
+
+export function TitleBarExtrasExample() {
+  return (
+    <AppShell mode="single" appName="扩展标题栏" sub="logo / 操作区 / 返回键"
+              logo={<Icon name="layers" className="logo" strokeWidth={1.3} />}
+              onBack={() => history.back()} backDisabled={false}
+              titleBarActions={
+                <Button variant="subtle" size="small" iconOnly aria-label="搜索">
+                  <Icon name="search" size={14} />
+                </Button>
+              }
+              controls="host">
+      <p>返回键在最左,logo 自定义,操作区按钮自动 no-drag。</p>
+    </AppShell>
+  );
+}`,
+    },
+    {
+      title: '宿主能力透传(hostControlsWidth / maximized / dragProps)',
+      description: 'TitleBar 的宿主相关 props 原样透传:host 模式用 hostControlsWidth 调预留宽度、dragProps 覆盖拖动区属性;自绘控制钮用受控 maximized 切换「最大化/还原」图标。',
+      demo: <AppShellHostDemo />,
+      code: `
+import { useState } from 'react';
+import { AppShell } from '@fluent-react/ui';
+
+/* host 模式:预留宽度按宿主按钮区实测调;拖动区属性整体覆盖(非 JadeView 宿主) */
+export function HostReservedExample() {
+  return (
+    <AppShell mode="single" appName="宿主自绘按钮区"
+              controls="host" hostControlsWidth={200}
+              dragProps={{ className: 'pywebview-drag-region' }}>
+      <p>右侧预留 200px 给宿主控制钮;拖动区类名经 dragProps 覆盖。</p>
+    </AppShell>
+  );
+}
+
+/* 自绘控制钮:maximized 受控(缺省则监听 html[data-maximized]) */
+export function SelfDrawnMaximizedExample() {
+  const [maximized, setMaximized] = useState(false);
+  return (
+    <AppShell mode="single" appName="自绘控制钮" maximized={maximized}
+              controls={{
+                minimize: () => {},
+                toggleMaximize: () => setMaximized(!maximized),
+                close: () => {},
+              }}>
+      <p>{maximized ? '已最大化(控制钮显示还原图标)' : '窗口化(控制钮显示最大化图标)'}</p>
+    </AppShell>
+  );
+}`,
+    },
+    {
+      title: '导航插槽与折叠控制(navHeader / collapsed)',
+      description: 'navHeader 固定在导航列表上方(折叠时隐藏),配 SearchBox 可做导航过滤;折叠态支持受控 collapsed + onCollapsedChange,或非受控 defaultCollapsed(汉堡自行驱动)。',
+      demo: <AppShellNavDemo />,
+      code: `
+import { useState } from 'react';
+import { AppShell, Icon, SearchBox, type NavEntry } from '@fluent-react/ui';
+
+const ALL: NavEntry[] = [
+  { key: 'home', label: '首页', icon: <Icon name="home" /> },
+  { key: 'music', label: '音乐', icon: <Icon name="file" strokeWidth={1.3} /> },
+  { key: 'video', label: '视频', icon: <Icon name="image" strokeWidth={1.3} /> },
+  { key: 'settings', label: '设置', icon: <Icon name="settings" strokeWidth={1.3} />, bottom: true },
+];
+
+/* 受控折叠 + 导航插槽过滤 */
+export function NavSlotExample() {
+  const [page, setPage] = useState('home');
+  const [collapsed, setCollapsed] = useState(false);
+  const [query, setQuery] = useState('');
+  const items = ALL.filter((e) => 'header' in e || e.label.includes(query));
+  return (
+    <AppShell mode="multi" appName="导航插槽" controls="host"
+              items={items} value={page} onChange={setPage}
+              navHeader={<SearchBox size="small" value={query} onChange={setQuery} placeholder="过滤导航" />}
+              collapsed={collapsed} onCollapsedChange={setCollapsed}>
+      <p>当前页:{page}</p>
+    </AppShell>
+  );
+}
+
+/* 非受控:defaultCollapsed 定初始折叠态,之后由汉堡驱动 */
+export function DefaultCollapsedExample() {
+  const [page, setPage] = useState('home');
+  return (
+    <AppShell mode="multi" appName="初始折叠" defaultCollapsed
+              items={ALL} value={page} onChange={setPage}>
+      <p>初始为 48px 窄条,点标题栏汉堡展开。</p>
+    </AppShell>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'mode', type: "'multi' | 'single'", default: "'multi'", description: '多页(侧导航 + 汉堡)/ 单页(仅标题栏)。' },
@@ -143,6 +242,76 @@ function AppShellSingleDemo() {
       <AppShell mode="single" appName="单页工具" sub="无侧导航"
                 controls={{ minimize: () => toast({ level: 'info', message: '(宿主)minimize' }), close: () => toast({ level: 'warning', message: '(宿主)close' }) }}>
         <p style={{ color: 'var(--text-2)' }}>单页模式:不渲染汉堡与侧导航,内容区铺满。</p>
+      </AppShell>
+    </div>
+  );
+}
+
+function AppShellTitleBarExtrasDemo() {
+  const toast = useToast();
+  return (
+    <div style={{ height: 200, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+      <AppShell mode="single" appName="扩展标题栏" sub="logo / 操作区 / 返回键"
+                logo={<Icon name="layers" className="logo" strokeWidth={1.3} />}
+                onBack={() => toast({ level: 'info', message: '返回上一页' })} backDisabled={false}
+                titleBarActions={
+                  <Button variant="subtle" size="small" iconOnly aria-label="搜索"
+                          onClick={() => toast({ level: 'info', message: '标题栏操作区按钮(自动 no-drag)' })}>
+                    <Icon name="search" size={14} />
+                  </Button>
+                }
+                controls="none">
+        <p style={{ color: 'var(--text-2)' }}>返回键在最左,logo 自定义,右侧操作区按钮自动 no-drag。</p>
+      </AppShell>
+    </div>
+  );
+}
+
+function AppShellHostDemo() {
+  const toast = useToast();
+  const [maximized, setMaximized] = useState(false);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+      <div style={{ height: 120, overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+        <AppShell mode="single" appName="host 预留" sub="hostControlsWidth=200"
+                  controls="host" hostControlsWidth={200}
+                  dragProps={{ className: 'demo-drag-region' }}>
+          <p style={{ color: 'var(--text-2)' }}>右侧预留 200px 给宿主自绘按钮;拖动区类名经 dragProps 覆盖。</p>
+        </AppShell>
+      </div>
+      <div style={{ height: 140, overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+        <AppShell mode="single" appName="自绘受控" sub={maximized ? '已最大化' : '窗口化'}
+                  maximized={maximized}
+                  controls={{
+                    minimize: () => toast({ level: 'info', message: '(宿主)minimize' }),
+                    toggleMaximize: () => setMaximized(!maximized),
+                    close: () => toast({ level: 'warning', message: '(宿主)close' }),
+                  }}>
+          <p style={{ color: 'var(--text-2)' }}>maximized 受控:点最大化钮切换「最大化/还原」图标。</p>
+        </AppShell>
+      </div>
+    </div>
+  );
+}
+
+function AppShellNavDemo() {
+  const [page, setPage] = useState('home');
+  const [collapsed, setCollapsed] = useState(false);
+  const [query, setQuery] = useState('');
+  const all: NavEntry[] = [
+    { key: 'home', label: '首页', icon: <Icon name="home" /> },
+    { key: 'music', label: '音乐', icon: <Icon name="file" strokeWidth={1.3} /> },
+    { key: 'video', label: '视频', icon: <Icon name="image" strokeWidth={1.3} /> },
+    { key: 'settings', label: '设置', icon: <Icon name="settings" strokeWidth={1.3} />, bottom: true },
+  ];
+  const items = all.filter((e) => 'header' in e || e.label.includes(query));
+  return (
+    <div style={{ height: 320, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+      <AppShell mode="multi" appName="导航插槽" sub="搜索过滤" controls="none"
+                items={items} value={page} onChange={setPage}
+                navHeader={<SearchBox size="small" value={query} onChange={setQuery} placeholder="过滤导航" />}
+                collapsed={collapsed} onCollapsedChange={setCollapsed}>
+        <p style={{ color: 'var(--text-2)' }}>当前页:{page}{collapsed ? '(已折叠,navHeader 隐藏)' : '(点汉堡折叠可见插槽隐藏)'}</p>
       </AppShell>
     </div>
   );
@@ -261,6 +430,34 @@ export function WailsHost() {
   );
 }`,
     },
+    {
+      title: 'logo 与交互元素(children / hostControlsWidth)',
+      description: 'logo 替换内置图标;children 放标题栏内交互元素(自动 no-drag,靠右、控制钮之前);host 模式的预留宽度经 hostControlsWidth 按宿主按钮区实际宽度调整(默认 146)。',
+      demo: <TitleBarSlotDemo />,
+      code: `
+import { Button, Icon, TitleBar } from '@fluent-react/ui';
+
+export function TitleBarSlotExample() {
+  return (
+    <>
+      {/* 自定义 logo + 标题栏交互元素(children 自动 no-drag) */}
+      <TitleBar appName="自定义 logo" sub="children 自动 no-drag"
+                logo={<Icon name="layers" className="logo" strokeWidth={1.3} />}
+                controls="none">
+        <Button variant="subtle" size="small" iconOnly aria-label="搜索">
+          <Icon name="search" size={14} />
+        </Button>
+        <Button variant="subtle" size="small" iconOnly aria-label="更多">
+          <Icon name="more" size={14} />
+        </Button>
+      </TitleBar>
+      {/* host 模式:宿主只画一颗关闭钮时收窄预留区 */}
+      <TitleBar appName="预留收窄" sub="hostControlsWidth=50"
+                controls="host" hostControlsWidth={50} />
+    </>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'appName', type: 'string', description: '应用名(必填)。' },
@@ -316,6 +513,31 @@ function TitleBarModes() {
       <div style={{ border: '1px solid var(--card-border)', borderRadius: 8, overflow: 'hidden', background: 'var(--layer)' }}>
         <TitleBar appName="自绘模式" sub="WinUI 控制钮"
                   controls={{ minimize: () => {}, toggleMaximize: () => {}, close: () => {} }} />
+      </div>
+    </div>
+  );
+}
+
+function TitleBarSlotDemo() {
+  const toast = useToast();
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ border: '1px solid var(--card-border)', borderRadius: 8, overflow: 'hidden', background: 'var(--layer)' }}>
+        <TitleBar appName="自定义 logo" sub="children 自动 no-drag"
+                  logo={<Icon name="layers" className="logo" strokeWidth={1.3} />}
+                  controls="none">
+          <Button variant="subtle" size="small" iconOnly aria-label="搜索"
+                  onClick={() => toast({ level: 'info', message: '标题栏交互元素:搜索' })}>
+            <Icon name="search" size={14} />
+          </Button>
+          <Button variant="subtle" size="small" iconOnly aria-label="更多"
+                  onClick={() => toast({ level: 'info', message: '标题栏交互元素:更多' })}>
+            <Icon name="more" size={14} />
+          </Button>
+        </TitleBar>
+      </div>
+      <div style={{ border: '1px solid var(--card-border)', borderRadius: 8, overflow: 'hidden', background: 'var(--layer)' }}>
+        <TitleBar appName="预留收窄" sub="hostControlsWidth=50" controls="host" hostControlsWidth={50} />
       </div>
     </div>
   );
@@ -380,6 +602,35 @@ export function ShellExample() {
   );
 }`,
     },
+    {
+      title: '列表上方插槽(header)',
+      description: 'header 固定在汉堡下方、列表上方(不随列表滚动,折叠时隐藏);配 SearchBox 可做导航过滤——激活项被过滤掉时指示条自动隐藏。',
+      demo: <NavViewHeaderDemo />,
+      code: `
+import { useState } from 'react';
+import { Icon, NavView, SearchBox, type NavEntry } from '@fluent-react/ui';
+
+const ALL: NavEntry[] = [
+  { key: 'home', label: '首页', icon: <Icon name="home" /> },
+  { header: '媒体' },
+  { key: 'music', label: '音乐', icon: <Icon name="file" strokeWidth={1.3} /> },
+  { key: 'video', label: '视频', icon: <Icon name="image" strokeWidth={1.3} /> },
+  { key: 'settings', label: '设置', icon: <Icon name="settings" strokeWidth={1.3} />, bottom: true },
+];
+
+export function NavHeaderExample() {
+  const [page, setPage] = useState('home');
+  const [query, setQuery] = useState('');
+  const items = ALL.filter((e) => 'header' in e || e.label.includes(query));
+  return (
+    <div className="flex h-[320px] w-full overflow-hidden rounded-lg border border-(--card-border)">
+      <NavView items={items} value={page} onChange={setPage}
+               header={<SearchBox size="small" value={query} onChange={setQuery} placeholder="搜索导航" />} />
+      <div className="flex-1 p-4 text-(--text-2)">当前页:{page}</div>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'items', type: 'NavEntry[]', description: '条目数组:普通项或 {header} 分组标题。' },
@@ -437,6 +688,26 @@ function NavViewTitleBarDemo() {
         <NavView items={items} value={page} onChange={setPage} collapsed={collapsed} />
         <div style={{ flex: 1, padding: 16, color: 'var(--text-2)' }}>当前页:{page}(点标题栏汉堡收缩)</div>
       </div>
+    </div>
+  );
+}
+
+function NavViewHeaderDemo() {
+  const [page, setPage] = useState('home');
+  const [query, setQuery] = useState('');
+  const all: NavEntry[] = [
+    { key: 'home', label: '首页', icon: <Icon name="home" /> },
+    { header: '媒体' },
+    { key: 'music', label: '音乐', icon: <Icon name="file" strokeWidth={1.3} /> },
+    { key: 'video', label: '视频', icon: <Icon name="image" strokeWidth={1.3} /> },
+    { key: 'settings', label: '设置', icon: <Icon name="settings" strokeWidth={1.3} />, bottom: true },
+  ];
+  const items = all.filter((e) => 'header' in e || e.label.includes(query));
+  return (
+    <div style={{ display: 'flex', height: 320, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)' }}>
+      <NavView items={items} value={page} onChange={setPage}
+               header={<SearchBox size="small" value={query} onChange={setQuery} placeholder="搜索导航" />} />
+      <div style={{ flex: 1, padding: 16, color: 'var(--text-2)', background: 'var(--layer)' }}>当前页:{page}(输入过滤导航项)</div>
     </div>
   );
 }

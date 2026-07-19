@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
   Button, Checkbox, CheckboxGroup, ColorPicker, NumberBox, Radio, RadioGroup, RangeSlider,
-  Rating, Slider, Switch, SwitchGroup, Upload, type UploadRequestOptions,
+  Rating, Slider, Switch, SwitchGroup, Upload, type UploadFile, type UploadRequestOptions,
 } from '@fluent-react/ui';
 import type { DocDef } from '../types';
 
@@ -43,8 +43,28 @@ function SliderBalance() {
   );
 }
 function SliderRange() {
-  const [v, setV] = useState<[number, number]>([20, 60]);
-  return <div style={{ width: 280 }}><RangeSlider value={v} onChange={setV} aria-label="价格区间" /></div>;
+  const [v, setV] = useState<[number, number]>([200, 600]);
+  const [committed, setCommitted] = useState<[number, number]>([200, 600]);
+  return (
+    <div style={{ width: 280 }}>
+      <RangeSlider value={v} onChange={setV} onChangeEnd={setCommitted}
+                   min={0} max={1000} step={50} aria-label="价格区间" />
+      <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>
+        拖动中:{v[0]}~{v[1]} · 提交:{committed[0]}~{committed[1]}
+      </span>
+    </div>
+  );
+}
+function SliderVerticalDisabled() {
+  const [v, setV] = useState(60);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 32 }}>
+      <Slider vertical header="亮度" showValue value={v} onChange={setV} />
+      <div style={{ width: 220 }}>
+        <Slider header="禁用" showValue value={30} onChange={() => {}} disabled />
+      </div>
+    </div>
+  );
 }
 
 const fakeRequest = ({ onProgress, onSuccess }: UploadRequestOptions) => {
@@ -183,6 +203,47 @@ export function CheckboxCardExample() {
           { value: 'autosave', label: '自动保存', description: '编辑内容每 30 秒写入本地。' },
           { value: 'sync', label: '云同步', description: '配置跨设备同步(需登录)。' },
           { value: 'beta', label: '抢先体验', description: '接收测试版更新。', disabled: true },
+        ]} />
+    </div>
+  );
+}`,
+    },
+    {
+      title: '纵向与整组禁用',
+      description: 'vertical 纵向排列;disabled 整组禁用;只给 defaultValue 即非受控,组内自维护选中集。',
+      demo: (
+        <div style={{ display: 'flex', gap: 32 }}>
+          <CheckboxGroup vertical defaultValue={['crash']}
+            options={[
+              { value: 'crash', label: '崩溃报告' },
+              { value: 'usage', label: '使用统计' },
+              { value: 'news', label: '产品资讯' },
+            ]} />
+          <CheckboxGroup disabled defaultValue={['sync']}
+            options={[
+              { value: 'sync', label: '云同步' },
+              { value: 'beta', label: '抢先体验' },
+            ]} />
+        </div>
+      ),
+      code: `
+import { CheckboxGroup } from '@fluent-react/ui';
+
+export function VerticalDisabledExample() {
+  return (
+    <div className="flex gap-8">
+      {/* vertical 纵向 + defaultValue 非受控 */}
+      <CheckboxGroup vertical defaultValue={['crash']}
+        options={[
+          { value: 'crash', label: '崩溃报告' },
+          { value: 'usage', label: '使用统计' },
+          { value: 'news', label: '产品资讯' },
+        ]} />
+      {/* disabled 整组禁用 */}
+      <CheckboxGroup disabled defaultValue={['sync']}
+        options={[
+          { value: 'sync', label: '云同步' },
+          { value: 'beta', label: '抢先体验' },
         ]} />
     </div>
   );
@@ -343,6 +404,55 @@ export function RadioCardExample() {
   );
 }`,
     },
+    {
+      title: '受控与单项卡片',
+      description: '不走 RadioGroup 时,单个 Radio 也可用 checked + onChange 受控互斥;card + description 让单项直接卡片化。',
+      demo: <RadioControlledCard />,
+      code: `
+import { useState } from 'react';
+import { Radio } from '@fluent-react/ui';
+
+export function ControlledCardExample() {
+  const [net, setNet] = useState('auto');
+  return (
+    <div className="flex gap-2">
+      <Radio card checked={net === 'auto'} onChange={() => setNet('auto')}
+             description="根据网络状况自动选择线路。">
+        自动
+      </Radio>
+      <Radio card checked={net === 'direct'} onChange={() => setNet('direct')}
+             description="始终直连,不走中转。">
+        直连
+      </Radio>
+    </div>
+  );
+}`,
+    },
+    {
+      title: '纵向与非受控',
+      description: 'vertical 纵向排列;只给 defaultValue 即非受控;name 指定组名(表单提交 / 多组共存时显式声明,缺省自动生成)。',
+      demo: (
+        <RadioGroup vertical name="doc-appearance" defaultValue="acrylic"
+          options={[
+            { value: 'mica', label: 'Mica' },
+            { value: 'acrylic', label: 'Acrylic' },
+            { value: 'none', label: '纯色' },
+          ]} />
+      ),
+      code: `
+import { RadioGroup } from '@fluent-react/ui';
+
+export function VerticalUncontrolledExample() {
+  return (
+    <RadioGroup vertical name="appearance" defaultValue="acrylic"
+      options={[
+        { value: 'mica', label: 'Mica' },
+        { value: 'acrylic', label: 'Acrylic' },
+        { value: 'none', label: '纯色' },
+      ]} />
+  );
+}`,
+    },
   ],
   props: [
     { name: 'checked / defaultChecked', type: 'boolean', description: '受控 / 非受控选中态(原生)。' },
@@ -377,6 +487,22 @@ function RadioCardDemo() {
         { value: 'acrylic', label: 'Acrylic', description: '实时磨砂,层次感最强。' },
         { value: 'none', label: '纯色', description: '不启用透明材质。', disabled: true },
       ]} />
+  );
+}
+
+function RadioControlledCard() {
+  const [net, setNet] = useState('auto');
+  return (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <Radio card checked={net === 'auto'} onChange={() => setNet('auto')}
+             description="根据网络状况自动选择线路。">
+        自动
+      </Radio>
+      <Radio card checked={net === 'direct'} onChange={() => setNet('direct')}
+             description="始终直连,不走中转。">
+        直连
+      </Radio>
+    </div>
   );
 }
 
@@ -482,6 +608,45 @@ export function SwitchGroupExample() {
           { value: 'update', label: '自动更新', description: '启动时检查新版本。' },
         ]} />
       <span className="text-(--text-2) text-[12.5px]">已开启:{enabled.join(', ') || '(无)'}</span>
+    </div>
+  );
+}`,
+    },
+    {
+      title: '非受控与整组禁用',
+      description: '只给 defaultValue 即非受控,组内自维护「已开启项」键集;disabled 整组禁用(比逐项 options.disabled 更省事)。',
+      demo: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <SwitchGroup defaultValue={['sound']}
+            options={[
+              { value: 'sound', label: '提示音' },
+              { value: 'vibrate', label: '振动' },
+            ]} />
+          <SwitchGroup disabled defaultValue={['sync']}
+            options={[
+              { value: 'sync', label: '云同步' },
+              { value: 'beta', label: '测试通道' },
+            ]} />
+        </div>
+      ),
+      code: `
+import { SwitchGroup } from '@fluent-react/ui';
+
+export function UncontrolledDisabledExample() {
+  return (
+    <div className="flex flex-col gap-3">
+      {/* defaultValue 非受控 */}
+      <SwitchGroup defaultValue={['sound']}
+        options={[
+          { value: 'sound', label: '提示音' },
+          { value: 'vibrate', label: '振动' },
+        ]} />
+      {/* disabled 整组禁用 */}
+      <SwitchGroup disabled defaultValue={['sync']}
+        options={[
+          { value: 'sync', label: '云同步' },
+          { value: 'beta', label: '测试通道' },
+        ]} />
     </div>
   );
 }`,
@@ -646,17 +811,47 @@ export function BalanceExample() {
     },
     {
       title: 'RangeSlider 双滑块',
-      description: '两枚滑珠取一段区间,值为 [下限, 上限];交叉拖动会自动换位。',
+      description: '两枚滑珠取一段区间,值为 [下限, 上限];交叉拖动会自动换位。min / max / step 定制取值区间与步进;onChangeEnd 在任一滑块交互结束时回调一次完整区间。',
       demo: <SliderRange />,
       code: `
 import { useState } from 'react';
 import { RangeSlider } from '@fluent-react/ui';
 
 export function RangeExample() {
-  const [v, setV] = useState<[number, number]>([20, 60]);
+  const [v, setV] = useState<[number, number]>([200, 600]);
+  const [committed, setCommitted] = useState<[number, number]>([200, 600]);
   return (
     <div className="w-[280px]">
-      <RangeSlider value={v} onChange={setV} aria-label="价格区间" />
+      <RangeSlider
+        value={v}
+        onChange={setV}
+        onChangeEnd={setCommitted} // 抬手时回调一次完整区间
+        min={0}
+        max={1000}
+        step={50}
+        aria-label="价格区间"
+      />
+      <span>拖动中:{v[0]}~{v[1]} · 提交:{committed[0]}~{committed[1]}</span>
+    </div>
+  );
+}`,
+    },
+    {
+      title: '纵向与禁用',
+      description: 'vertical 切换为纵向形态(轨道 200px 高,气泡移到左侧);disabled 禁用交互并降低不透明度。',
+      demo: <SliderVerticalDisabled />,
+      code: `
+import { useState } from 'react';
+import { Slider } from '@fluent-react/ui';
+
+export function VerticalDisabledExample() {
+  const [v, setV] = useState(60);
+  return (
+    <div className="flex items-start gap-8">
+      <Slider vertical header="亮度" showValue value={v} onChange={setV} />
+      <div className="w-[220px]">
+        <Slider header="禁用" showValue value={30} onChange={() => {}} disabled />
+      </div>
     </div>
   );
 }`,
@@ -745,6 +940,25 @@ export function SizeStatusExample() {
   );
 }`,
     },
+    {
+      title: '受控与精度',
+      description: 'value + onChange 组成受控;precision 固定小数位,调节钮与手输提交都舍入到该位数。',
+      demo: <NumberBoxControlled />,
+      code: `
+import { useState } from 'react';
+import { NumberBox } from '@fluent-react/ui';
+
+export function ControlledPrecisionExample() {
+  const [v, setV] = useState(2.5);
+  return (
+    <div className="flex items-center gap-3">
+      <NumberBox value={v} onChange={setV} precision={1}
+                 step={0.5} min={0} max={10} aria-label="缩放倍率" />
+      <span>当前:{v.toFixed(1)}x</span>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'value', type: 'number', description: '受控值。' },
@@ -818,6 +1032,27 @@ function RatingDemo() {
   return <Rating value={v} onChange={setV} aria-label="评分" />;
 }
 
+function NumberBoxControlled() {
+  const [v, setV] = useState(2.5);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <NumberBox value={v} onChange={setV} precision={1} step={0.5} min={0} max={10} aria-label="缩放倍率" />
+      <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>当前:{v.toFixed(1)}x</span>
+    </div>
+  );
+}
+
+function ColorPickerControlled() {
+  const [c, setC] = useState('#4CC2FF');
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <ColorPicker value={c} onChange={setC} showText />
+      <span style={{ color: c, fontSize: 12.5 }}>强调色预览</span>
+      <ColorPicker value={c} disabled aria-label="禁用(跟随左侧)" />
+    </div>
+  );
+}
+
 const colorpicker: DocDef = {
   key: 'colorpicker',
   name: 'ColorPicker',
@@ -865,6 +1100,26 @@ export function PresetsExample() {
       disabledAlpha
       presets={['#0078D4', '#4CC2FF', '#D13438', '#107C10', '#FFB900', '#8764B8']}
     />
+  );
+}`,
+    },
+    {
+      title: '受控与禁用',
+      description: 'value + onChange 组成受控,可与外部预览联动;disabled 禁用触发器(仍显示当前色)。',
+      demo: <ColorPickerControlled />,
+      code: `
+import { useState } from 'react';
+import { ColorPicker } from '@fluent-react/ui';
+
+export function ControlledExample() {
+  const [c, setC] = useState('#4CC2FF');
+  return (
+    <div className="flex items-center gap-3">
+      <ColorPicker value={c} onChange={setC} showText />
+      <span style={{ color: c }}>强调色预览</span>
+      {/* 同一受控值的禁用实例:跟随左侧变色,但不可打开面板 */}
+      <ColorPicker value={c} disabled aria-label="禁用(跟随左侧)" />
+    </div>
   );
 }`,
     },
@@ -950,6 +1205,79 @@ export function DraggerExample() {
   );
 }`,
     },
+    {
+      title: '受控列表与事件',
+      description:
+        'fileList 完全受控:在 onChange 里把回调的 fileList 写回 state 即接受变更。UploadFile 结构 { uid, name, size, status, percent, raw }:预置行手工构造(无 raw),经 DOM 选择的行带 raw 原始 File;accept 过滤可选类型,onRemove 在移除文件行时触发。',
+      demo: <UploadControlled />,
+      code: `
+import { useState } from 'react';
+import { Button, Upload, type UploadFile, type UploadRequestOptions } from '@fluent-react/ui';
+
+// 模拟一次带进度的上传
+const fakeRequest = ({ onProgress, onSuccess }: UploadRequestOptions) => {
+  let p = 0;
+  const t = setInterval(() => {
+    p += 20;
+    if (p >= 100) { clearInterval(t); onSuccess(); } else onProgress(p);
+  }, 180);
+};
+
+export function ControlledListExample() {
+  // 预置文件行:uid / name / size / status / percent 手工构造(raw 仅 DOM 选择时存在)
+  const [files, setFiles] = useState<UploadFile[]>([
+    { uid: 'preset-1', name: '设计稿.fig', size: 2 * 1024 * 1024, status: 'done' },
+    { uid: 'preset-2', name: '截图.png', size: 640 * 1024, status: 'uploading', percent: 45 },
+  ]);
+  const [last, setLast] = useState('');
+  return (
+    <div className="w-[360px] flex flex-col gap-2">
+      <Upload
+        fileList={files}
+        accept="image/*,.pdf"
+        customRequest={fakeRequest}
+        onChange={({ file, fileList }) => {
+          setFiles(fileList); // 受控:写回即接受变更
+          setLast(file.name + (file.raw ? '(本次选择)' : '(预置)'));
+        }}
+        onRemove={(f) => setLast('已移除 ' + f.name)}
+      >
+        <Button>选择图片或 PDF</Button>
+      </Upload>
+      {last && <span>最近变更:{last}</span>}
+    </div>
+  );
+}`,
+    },
+    {
+      title: '非受控、隐藏列表与禁用',
+      description: 'defaultFileList 给非受控初始列表;showFileList={false} 关掉内置文件行(配 onChange 自绘);disabled 禁用选择与拖放。',
+      demo: <UploadMiscDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, Upload } from '@fluent-react/ui';
+
+export function ListModesExample() {
+  const [names, setNames] = useState<string[]>([]);
+  return (
+    <div className="w-[360px] flex flex-col gap-3">
+      {/* defaultFileList:非受控初始列表,后续变更由组件内部维护 */}
+      <Upload defaultFileList={[{ uid: 'preset-a', name: '预置附件.zip', size: 10 * 1024, status: 'done' }]}>
+        <Button>追加文件(非受控)</Button>
+      </Upload>
+      {/* showFileList={false}:隐藏内置文件行,用 onChange 自绘 */}
+      <Upload showFileList={false} onChange={({ fileList }) => setNames(fileList.map((f) => f.name))}>
+        <Button>隐藏内置列表</Button>
+      </Upload>
+      {names.length > 0 && <span>自绘列表:{names.join('、')}</span>}
+      {/* disabled:触发器与拖放均不可用 */}
+      <Upload disabled>
+        <Button disabled>已禁用</Button>
+      </Upload>
+    </div>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'fileList / defaultFileList', type: 'UploadFile[]', description: '受控 / 非受控文件列表。' },
@@ -977,5 +1305,50 @@ export function DraggerExample() {
     },
   ],
 };
+
+function UploadControlled() {
+  const [files, setFiles] = useState<UploadFile[]>([
+    { uid: 'preset-1', name: '设计稿.fig', size: 2 * 1024 * 1024, status: 'done' },
+    { uid: 'preset-2', name: '截图.png', size: 640 * 1024, status: 'uploading', percent: 45 },
+  ]);
+  const [last, setLast] = useState('');
+  return (
+    <div style={{ width: 360, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <Upload
+        fileList={files}
+        accept="image/*,.pdf"
+        customRequest={fakeRequest}
+        onChange={({ file, fileList }) => {
+          setFiles(fileList);
+          setLast(file.name + (file.raw ? '(本次选择)' : '(预置)'));
+        }}
+        onRemove={(f) => setLast('已移除 ' + f.name)}
+      >
+        <Button>选择图片或 PDF</Button>
+      </Upload>
+      {last && <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>最近变更:{last}</span>}
+    </div>
+  );
+}
+
+function UploadMiscDemo() {
+  const [names, setNames] = useState<string[]>([]);
+  return (
+    <div style={{ width: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <Upload defaultFileList={[{ uid: 'preset-a', name: '预置附件.zip', size: 10 * 1024, status: 'done' }]}>
+        <Button>追加文件(非受控)</Button>
+      </Upload>
+      <Upload showFileList={false} onChange={({ fileList }) => setNames(fileList.map((f) => f.name))}>
+        <Button>隐藏内置列表</Button>
+      </Upload>
+      {names.length > 0 && (
+        <span style={{ color: 'var(--text-2)', fontSize: 12.5 }}>自绘列表:{names.join('、')}</span>
+      )}
+      <Upload disabled>
+        <Button disabled>已禁用</Button>
+      </Upload>
+    </div>
+  );
+}
 
 export const inputDocs: DocDef[] = [checkbox, radio, toggle, slider, numberbox, rating, colorpicker, upload];
