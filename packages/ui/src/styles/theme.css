@@ -414,7 +414,9 @@ html[data-inactive] .accent-text { filter: saturate(0.6); }
 
 /* ToggleSwitch */
 .switch { display: inline-flex; align-items: center; gap: var(--sp-s); cursor: pointer; }
-.switch input { position: absolute; opacity: 0; }
+/* 必须 0 尺寸:绝对定位跳过 static 祖先的 overflow 裁剪,带尺寸的隐藏 input
+   会把视口滚动盒撑高,点 label 时浏览器滚 input 入视野 → 整页错位 */
+.switch input { position: absolute; opacity: 0; width: 0; height: 0; }
 .switch .track {
   width: 40px; height: 20px; border-radius: 10px;
   border: 1px solid var(--text-2); background: transparent;

@@ -54,11 +54,15 @@ for (let i = 0; i < count; i++) {
       // 指南页可以没有 API 区;有 API 标题则必须有表
       hasApiHeading: [...doc.querySelectorAll('h2')].some((h) => h.textContent.trim() === 'API'),
       apiTables: doc.querySelectorAll('.api-table').length,
+      // 视口滚动盒不得溢出:带尺寸的 abs 隐藏元素会逃过 static 祖先的 overflow
+      // 裁剪撑高 html,focus/label 激活时浏览器滚 html → 整页错位
+      viewportOverflow: document.scrollingElement.scrollHeight - innerHeight,
     };
   });
   if (!info.doc) { console.log(`--- ${label}(非文档页)`); continue; }
   const ok = info.sections >= 1 && info.codeBlocks >= 1 && (!info.hasApiHeading || info.apiTables >= 1);
   check(`${label}: examples=${info.sections} code=${info.codeBlocks} api=${info.apiTables}`, ok);
+  if (info.viewportOverflow > 0) check(`${label}: 视口滚动盒溢出 ${info.viewportOverflow}px`, false);
 }
 
 /* 交互检查:Button 页 显示代码 + 复制按钮 */
