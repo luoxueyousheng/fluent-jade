@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AppShell, useLog, useToast, type NavEntry } from '@fluent-jade/ui';
+import { AppShell, useToast, type NavEntry } from '@fluent-jade/ui';
 import { HomeRegular, SettingsRegular } from '@fluent-jade/icon';
 import { ready, configure, useOn, hasJade, type ToastPayload } from '@fluent-jade/bridge';
 import { HomePage } from './pages/HomePage';
@@ -26,7 +26,6 @@ const keyFromHash = (): string => {
 
 export function App() {
   const toast = useToast();
-  const { entries, log, clear } = useLog();
   const [page, setPage] = useState(keyFromHash);
   const [collapsed, setCollapsed] = useState(false);
   const [booted, setBooted] = useState(false);
@@ -39,14 +38,13 @@ export function App() {
     bootRef.current = true;
     configure({
       onError: (channel, err) => toast({ level: 'error', title: `${channel} 失败`, message: String((err as Error)?.message ?? err) }),
-      onLog: (text, ok) => log(text, ok),
     });
     void ready().then((r) => {
       setHasBackdrop(r.hasBackdrop);
       setBooted(true);
       toast({ level: 'success', title: '已就绪', message: r.hasJade ? 'IPC 通道已连通。' : '独立预览(mock 宿主)。' });
     });
-  }, [toast, log]);
+  }, [toast]);
 
   useOn<ToastPayload>('toast', (p) => toast(p));
 
@@ -72,7 +70,7 @@ export function App() {
   };
 
   const doc = docByKey.get(page);
-  const onHost = booted && hasJade && !window.jade?._isMock;
+  const onHost = booted && hasJade() && !window.jade?._isMock;
 
   /* AppShell 多页模式:标题栏(返回 + 汉堡)+ 侧导航 + 内容区一体;
      真机 title-overlay 由宿主画控制钮,浏览器预览不渲染不预留 */
@@ -87,7 +85,7 @@ export function App() {
       {/* key=page:切换即重挂载,重放入场动效;仅渲染当前页 */}
       <section className="page active page-enter" key={page}>
         {page === 'home' ? (
-          <HomePage entries={entries} clearLog={clear} onOpen={navigate} />
+          <HomePage onOpen={navigate} />
         ) : page === 'settings' ? (
           <SettingsPage hasBackdrop={hasBackdrop} />
         ) : doc ? (

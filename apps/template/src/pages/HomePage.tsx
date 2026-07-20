@@ -1,32 +1,25 @@
-/* 首页 = 组件画廊:全部组件的预览卡片墙(迷你实时预览 + 名称 + 一句描述),
- * 点击卡片进入对应文档页;顶部搜索框过滤卡片。宿主通信演示收进底部 Expander。 */
-import { useMemo, useState } from 'react';
-import {
-  Button,
-  Divider,
-  Expander,
-  LogPane,
-  ProgressBar,
-  SearchBox,
-  useToast,
-  type LogEntry,
-} from '@fluent-jade/ui';
-import { invoke, useOn } from '@fluent-jade/bridge';
+/* 首页 = 组件画廊:全部组件的预览卡片墙(手工策划的迷你预览 + 名称),
+ * 点击卡片进入对应文档页;顶部搜索框过滤卡片。 */
+import { useMemo, useState, type ReactNode } from 'react';
+import { SearchBox } from '@fluent-jade/ui';
 import { docGroups } from '../docs/registry';
+import { galleryPreviews } from './galleryPreviews';
 
+/* 策划预览缺失时回退到首个演示,并 warn 一次便于发现遗漏 */
+const missed = new Set<string>();
+const previewOf = (key: string, fallback: ReactNode) => {
+  const p = galleryPreviews[key];
+  if (p === undefined && !missed.has(key)) {
+    missed.add(key);
+    console.warn(`[gallery] 缺少策划预览:${key}`);
+  }
+  return p ?? fallback;
+};
 
-export function HomePage({ entries, clearLog, onOpen }: {
-  entries: LogEntry[];
-  clearLog: () => void;
+export function HomePage({ onOpen }: {
   /** 点击卡片打开对应组件文档页 */
   onOpen: (key: string) => void;
 }) {
-  const toast = useToast();
-  const [exportPct, setExportPct] = useState(0);
-  useOn<{ task: string; percent: number }>('progress', (p) => {
-    if (p.task === 'export') setExportPct(p.percent);
-  });
-
   const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const componentGroups = useMemo(() => docGroups.filter((g) => !g.guide), []);
@@ -67,9 +60,9 @@ export function HomePage({ entries, clearLog, onOpen }: {
                    aria-label={`打开 ${d.cn} ${d.name} 文档`}
                    onClick={() => onOpen(d.key)}
                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(d.key); } }}>
-                {/* 迷你预览:居中展示单个标志性组件(取首个演示的第一个元素,其余 CSS 隐藏),不可交互 */}
+                {/* 迷你预览:手工策划的静态形态,不可交互 */}
                 <div className="gc-preview" aria-hidden="true">
-                  <div className="gc-fit">{d.sections[0]?.demo}</div>
+                  <div className="gc-fit">{previewOf(d.key, d.sections[0]?.demo)}</div>
                 </div>
                 <div className="gc-meta">
                   <span className="gc-name">{d.cn}<i>{d.name}</i></span>
@@ -79,25 +72,6 @@ export function HomePage({ entries, clearLog, onOpen }: {
           </div>
         </section>
       ))}
-
-      <Divider>宿主通信演示</Divider>
-      <Expander summary="IPC 调用与日志(独立预览时由 mock 宿主响应)">
-        <div className="row" style={{ marginBottom: 10 }}>
-          <Button variant="accent" onClick={() => void invoke('export_report', { rows: 200 })}>导出报表(进度推送)</Button>
-          <Button onClick={() => void invoke('risky_op')}>故意失败</Button>
-          <Button onClick={async () => {
-            try {
-              const r = await invoke.json('ping');
-              toast({ level: 'info', title: 'ping', message: JSON.stringify(r) });
-            } catch (e) {
-              toast({ level: 'error', title: 'ping 失败', message: String(e) });
-            }
-          }}>ping</Button>
-          <Button variant="subtle" onClick={clearLog}>清空日志</Button>
-        </div>
-        <ProgressBar value={exportPct} className="mb-3" />
-        <LogPane entries={entries} />
-      </Expander>
     </>
   );
 }

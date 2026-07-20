@@ -1,7 +1,8 @@
 /* 文档数据:指南 — 快速上手 / 宿主接入 / 主题定制 / 样式定制 / 基础设施(不进首页画廊) */
 import { useEffect, useState } from 'react';
-import { Button, InfoBar, TextArea } from '@fluent-jade/ui';
+import { Button, InfoBar, LogPane, ProgressBar, TextArea, useLog, useToast } from '@fluent-jade/ui';
 import { HomeRegular, SettingsRegular } from '@fluent-jade/icon';
+import { invoke, useOn } from '@fluent-jade/bridge';
 import type { DocDef } from '../types';
 
 /* ---- 运行时提取默认令牌(从编译后样式表读,永远与当前版本一致) ---- */
@@ -65,6 +66,42 @@ function TokenDump() {
 const note = (text: string) => (
   <InfoBar level="info" title="说明">{text}</InfoBar>
 );
+
+/* ---- 宿主接入页活演示:IPC 调用 + 进度推送 + 调用日志 ----
+ * 独立预览时由 bridge mock 宿主响应(export_report 推 progress,risky_op 稳定失败) */
+function HostCommDemo() {
+  const toast = useToast();
+  const { entries, log, clear } = useLog();
+  const [pct, setPct] = useState(0);
+  useOn<{ task: string; percent: number }>('progress', (p) => {
+    if (p.task === 'export') setPct(p.percent);
+  });
+  const run = async (ch: string, body?: unknown) => {
+    const r = await invoke(ch, body);
+    log(`${ch} → ${r.ok ? 'ok' : (r.error?.message ?? 'fail')} (${r.ms}ms)`, r.ok);
+  };
+  return (
+    <div className="w-full">
+      <div className="mb-2.5 flex flex-wrap gap-2">
+        <Button variant="accent" onClick={() => void run('export_report', { rows: 200 })}>导出报表(进度推送)</Button>
+        <Button onClick={() => void run('risky_op')}>故意失败</Button>
+        <Button onClick={async () => {
+          try {
+            const r = await invoke.json('ping');
+            log(`ping → ${JSON.stringify(r)}`, true);
+            toast({ level: 'info', title: 'ping', message: JSON.stringify(r) });
+          } catch (e) {
+            log(`ping → ${String(e)}`);
+            toast({ level: 'error', title: 'ping 失败', message: String(e) });
+          }
+        }}>ping</Button>
+        <Button variant="subtle" onClick={clear}>清空日志</Button>
+      </div>
+      <ProgressBar value={pct} className="mb-3" />
+      <LogPane entries={entries} />
+    </div>
+  );
+}
 
 const start: DocDef = {
   key: 'guide-start',
@@ -224,6 +261,45 @@ await setThemeMode('dark');
 await applyBackdrop('acrylic');
 
 const { dark, mode, backdrop } = useTheme();`,
+    },
+    {
+      title: '5. 活演示:IPC 调用与日志',
+      description: '直接打真实通道:独立预览时由 mock 宿主响应(`export_report` 推 `progress` 事件、`risky_op` 稳定失败、`ping` 返回负载),JadeView 真机里则由 Go 侧响应。日志面板记录每次调用的结果与耗时。',
+      demo: <HostCommDemo />,
+      code: `
+import { useState } from 'react';
+import { Button, LogPane, ProgressBar, useLog } from '@fluent-jade/ui';
+import { invoke, useOn } from '@fluent-jade/bridge';
+
+export function HostDemo() {
+  const { entries, log, clear } = useLog();
+  const [pct, setPct] = useState(0);
+
+  // 订阅宿主推送(组件卸载自动退订)
+  useOn<{ task: string; percent: number }>('progress', (p) => {
+    if (p.task === 'export') setPct(p.percent);
+  });
+
+  // Result 式调用:{ ok, data, error, ms }
+  const run = async (ch: string, body?: unknown) => {
+    const r = await invoke(ch, body);
+    log(\`\${ch} → \${r.ok ? 'ok' : r.error?.message} (\${r.ms}ms)\`, r.ok);
+  };
+
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex gap-2">
+        <Button variant="accent" onClick={() => void run('export_report', { rows: 200 })}>
+          导出报表
+        </Button>
+        <Button onClick={() => void run('risky_op')}>故意失败</Button>
+        <Button variant="subtle" onClick={clear}>清空日志</Button>
+      </div>
+      <ProgressBar value={pct} />
+      <LogPane entries={entries} />
+    </div>
+  );
+}`,
     },
   ],
   props: [],
