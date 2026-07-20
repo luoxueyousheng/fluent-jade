@@ -560,7 +560,7 @@ const datagrid: DocDef = {
   sections: [
     {
       title: '受控排序与选中',
-      description: '名称左齐、类型居中、大小右齐;可排序列表头用上下 chevron 指示。',
+      description: '名称左齐、类型居中、大小右齐;大小列用 render 自定义单元格(排序仍按原始数值)。可排序列表头用上下 chevron 指示。',
       demo: <DataGridDemo />,
       code: `
 import { useState } from 'react';
@@ -578,7 +578,8 @@ const rows: Row[] = [
 const columns: DataGridColumn<Row>[] = [
   { key: 'name', title: '名称', width: '2fr', sortable: true, align: 'left' },
   { key: 'type', title: '类型', width: '1fr', align: 'center' },
-  { key: 'size', title: '大小 (KB)', width: '1fr', sortable: true, align: 'right' },
+  // render 自定义单元格内容;排序仍按原始数据 size 进行
+  { key: 'size', title: '大小 (KB)', width: '1fr', sortable: true, align: 'right', render: (row) => row.size + ' KB' },
 ];
 
 export function DataGridExample() {
@@ -629,7 +630,7 @@ function DataGridDemo() {
   const cols: DataGridColumn<{ id: string; name: string; type: string; size: number }>[] = [
     { key: 'name', title: '名称', width: '2fr', sortable: true, align: 'left' },
     { key: 'type', title: '类型', width: '1fr', align: 'center' },
-    { key: 'size', title: '大小 (KB)', width: '1fr', sortable: true, align: 'right' },
+    { key: 'size', title: '大小 (KB)', width: '1fr', sortable: true, align: 'right', render: (row) => `${row.size} KB` },
   ];
   const rows = ROWS.map((r) => ({ id: r.key, name: r.name, type: r.type, size: r.size }));
   const shown = sort

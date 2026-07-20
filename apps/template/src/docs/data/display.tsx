@@ -866,7 +866,7 @@ export function AvatarRadiusExample() {
     },
     {
       title: '重叠组(AvatarGroup)',
-      description: '重叠排列的头像组,超出时显示 +N 溢出计数。源自 MagicUI。',
+      description: '重叠排列的头像组,超出时显示 +N 溢出计数;gap 控制项间距(正数分开,负数重叠,默认 -16px)。源自 MagicUI。',
       demo: (
         <div className="flex flex-col items-start gap-3">
           <AvatarGroup avatarUrls={[
@@ -877,6 +877,9 @@ export function AvatarRadiusExample() {
           <AvatarGroup avatarUrls={[
             { name: '林婉清' }, { name: '赵子龙' }, { name: '周文轩' },
           ]} numPeople={99} />
+          <AvatarGroup avatarUrls={[
+            { name: '林婉清' }, { name: '赵子龙' }, { name: '周文轩' },
+          ]} gap={4} />
         </div>
       ),
       code: `
@@ -885,7 +888,7 @@ import { AvatarGroup } from '@fluent-jade/ui';
 export function AvatarGroupExample() {
   return (
     <>
-      {/* 基础重叠 */}
+      {/* 基础重叠(默认 gap -16px) */}
       <AvatarGroup avatarUrls={[
         { name: '林婉清', profileUrl: '#' },
         { name: '赵子龙', profileUrl: '#' },
@@ -895,6 +898,10 @@ export function AvatarGroupExample() {
       <AvatarGroup avatarUrls={[
         { name: '林婉清' }, { name: '赵子龙' }, { name: '周文轩' },
       ]} numPeople={99} />
+      {/* gap 传正数:改为平铺分开排列 */}
+      <AvatarGroup avatarUrls={[
+        { name: '林婉清' }, { name: '赵子龙' }, { name: '周文轩' },
+      ]} gap={4} />
     </>
   );
 }`,
@@ -1230,10 +1237,10 @@ const marquee: DocDef = {
   sections: [
     {
       title: '基础用法',
-      description: '纯 CSS 动画,零 JS 运行时。默认水平滚动,pauseOnHover 悬停暂停,duration 控制速度。',
+      description: '纯 CSS 动画,零 JS 运行时。默认水平滚动,pauseOnHover 悬停暂停,duration 控制速度,repeat 控制内容重复次数(默认 4,无缝滚动至少 2)。',
       demo: (
         <div className="w-full flex items-center justify-center">
-          <Marquee pauseOnHover duration={20} className="w-full max-w-[320px]">
+          <Marquee pauseOnHover duration={20} repeat={2} className="w-full max-w-[320px]">
             {['React 19', 'Tailwind v4', 'TypeScript', 'WinUI 3', 'Fluent', 'JadeView'].map((t) => (
               <span key={t}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md
@@ -1250,8 +1257,9 @@ import { Marquee } from '@fluent-jade/ui';
 const items = ['React 19', 'Tailwind v4', 'TypeScript', 'WinUI 3', 'Fluent', 'JadeView'];
 
 export function MarqueeExample() {
+  // repeat 控制内容重复次数:内容已足够宽时可降到 2(无缝滚动下限)
   return (
-    <Marquee pauseOnHover duration={20}>
+    <Marquee pauseOnHover duration={20} repeat={2}>
       {items.map((t) => (
         <span key={t}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-md
@@ -1770,14 +1778,22 @@ export function DockExample() {
     },
     {
       title: '自定义放大',
-      description: 'iconMagnification 最大尺寸;iconDistance 影响半径(越小越敏感)。',
+      description: 'iconSize 图标默认尺寸;iconMagnification 最大尺寸;iconDistance 影响半径(越小越敏感);direction 控制图标垂直对齐(贴栏底);disableMagnification 关闭放大(下排静态)。',
       demo: (
-        <Dock iconMagnification={60} iconDistance={100}>
-          <DockIcon label="首页"><HomeRegular size={20} /></DockIcon>
-          <DockIcon label="搜索"><SearchRegular size={20} /></DockIcon>
-          <DockIcon label="消息"><ChatRegular size={20} /></DockIcon>
-          <DockIcon label="设置"><SettingsRegular size={20} /></DockIcon>
-        </Dock>
+        <div className="flex w-full flex-col items-center gap-3">
+          <Dock iconSize={32} iconMagnification={60} iconDistance={100} direction="bottom">
+            <DockIcon label="首页"><HomeRegular size={20} /></DockIcon>
+            <DockIcon label="搜索"><SearchRegular size={20} /></DockIcon>
+            <DockIcon label="消息"><ChatRegular size={20} /></DockIcon>
+            <DockIcon label="设置"><SettingsRegular size={20} /></DockIcon>
+          </Dock>
+          <Dock disableMagnification>
+            <DockIcon label="首页"><HomeRegular size={20} /></DockIcon>
+            <DockIcon label="搜索"><SearchRegular size={20} /></DockIcon>
+            <DockIcon label="消息"><ChatRegular size={20} /></DockIcon>
+            <DockIcon label="设置"><SettingsRegular size={20} /></DockIcon>
+          </Dock>
+        </div>
       ),
       code: `
 import { Dock, DockIcon } from '@fluent-jade/ui';
@@ -1785,28 +1801,39 @@ import { HomeRegular, SearchRegular, ChatRegular, SettingsRegular } from '@fluen
 
 export function DockMagnifyExample() {
   return (
-    <Dock iconMagnification={60} iconDistance={100}>
-      <DockIcon label="首页"><HomeRegular size={20} /></DockIcon>
-      <DockIcon label="搜索"><SearchRegular size={20} /></DockIcon>
-      <DockIcon label="消息"><ChatRegular size={20} /></DockIcon>
-      <DockIcon label="设置"><SettingsRegular size={20} /></DockIcon>
-    </Dock>
+    <div className="flex w-full flex-col items-center gap-3">
+      {/* iconSize 默认尺寸 32px;direction="bottom" 图标贴栏底 */}
+      <Dock iconSize={32} iconMagnification={60} iconDistance={100} direction="bottom">
+        <DockIcon label="首页"><HomeRegular size={20} /></DockIcon>
+        <DockIcon label="搜索"><SearchRegular size={20} /></DockIcon>
+        <DockIcon label="消息"><ChatRegular size={20} /></DockIcon>
+        <DockIcon label="设置"><SettingsRegular size={20} /></DockIcon>
+      </Dock>
+      {/* disableMagnification 关闭放大,纯静态停靠栏 */}
+      <Dock disableMagnification>
+        <DockIcon label="首页"><HomeRegular size={20} /></DockIcon>
+        <DockIcon label="搜索"><SearchRegular size={20} /></DockIcon>
+        <DockIcon label="消息"><ChatRegular size={20} /></DockIcon>
+        <DockIcon label="设置"><SettingsRegular size={20} /></DockIcon>
+      </Dock>
+    </div>
   );
 }`,
     },
     {
       title: '点击事件 / 链接',
-      description: '推荐把 onValueClick 挂在 Dock 上,子项用 value 标识;也可单项 onClick。href 做跳转。',
+      description: '推荐把 onValueClick 挂在 Dock 上,子项用 value 标识;也可单项 onClick。href 做跳转,配 external 在新标签页打开。',
       demo: (
         <Dock onValueClick={(v) => console.log('dock click', v)}>
           <DockIcon value="home" label="首页"><HomeRegular size={20} /></DockIcon>
           <DockIcon value="search" label="搜索"><SearchRegular size={20} /></DockIcon>
           <DockIcon value="settings" label="设置" href="#settings"><SettingsRegular size={20} /></DockIcon>
+          <DockIcon value="docs" label="React 文档(新标签页)" href="https://react.dev" external><GlobeRegular size={20} /></DockIcon>
         </Dock>
       ),
       code: `
 import { Dock, DockIcon } from '@fluent-jade/ui';
-import { HomeRegular, SearchRegular, SettingsRegular } from '@fluent-jade/icon';
+import { HomeRegular, SearchRegular, SettingsRegular, GlobeRegular } from '@fluent-jade/icon';
 
 export function DockClickExample() {
   return (
@@ -1820,6 +1847,10 @@ export function DockClickExample() {
       {/* 也可单项 onClick;与 Dock.onValueClick 并存时先单项 */}
       <DockIcon value="settings" label="设置" href="#settings">
         <SettingsRegular size={20} />
+      </DockIcon>
+      {/* external 需配 href:在新标签页打开外链 */}
+      <DockIcon value="docs" label="React 文档(新标签页)" href="https://react.dev" external>
+        <GlobeRegular size={20} />
       </DockIcon>
     </Dock>
   );

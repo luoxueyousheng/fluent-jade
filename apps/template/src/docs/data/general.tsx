@@ -804,17 +804,18 @@ export function ThemeTogglerDemo() {
     },
     {
       title: '从中心展开',
-      description: 'fromCenter 让 clip-path 从视口中心展开(默认从按钮位置)。',
+      description: 'fromCenter 让 clip-path 从视口中心展开(默认从按钮位置);duration 控制过渡时长(毫秒),这里放慢到 800ms 便于观察揭示过程。',
       demo: (
         <div className="flex justify-center p-6">
-          <ThemeToggler fromCenter />
+          <ThemeToggler fromCenter duration={800} />
         </div>
       ),
       code: `
 import { ThemeToggler } from '@fluent-jade/ui';
 
 export function ThemeTogglerCenterDemo() {
-  return <ThemeToggler fromCenter />;
+  // fromCenter 从视口中心展开;duration 放慢过渡便于观察
+  return <ThemeToggler fromCenter duration={800} />;
 }`,
     },
     {
