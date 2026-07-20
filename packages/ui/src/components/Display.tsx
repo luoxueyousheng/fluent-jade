@@ -112,9 +112,10 @@ export function AvatarGroup({
   const px = typeof size === 'number' ? size : AVATAR_PX[size];
   const offset = gapProp ?? `calc(var(--sp-l) * -1)`;
 
-  // 自动折叠:maxLen 截断,剩余计入溢出
-  const shown = maxLen != null ? avatarUrls.slice(0, maxLen) : avatarUrls;
-  const overflow = maxLen != null ? Math.max(0, avatarUrls.length - maxLen) : 0;
+  // 自动折叠:maxLen 截断,剩余计入溢出;非法值 clamp 到 0
+  const max = maxLen != null ? Math.max(0, Math.floor(maxLen)) : null;
+  const shown = max != null ? avatarUrls.slice(0, max) : avatarUrls;
+  const overflow = max != null ? Math.max(0, avatarUrls.length - max) : 0;
   const totalExtra = numPeople ?? overflow;
 
   return (

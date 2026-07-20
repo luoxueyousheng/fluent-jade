@@ -781,12 +781,12 @@ const themetoggler: DocDef = {
   name: 'ThemeToggler',
   cn: '主题切换',
   description:
-    '带 View Transitions 动效的明暗主题切换按钮(Chrome 111+)。点击时以 clip-path 形状揭示新主题,不支持时静默降级。通过 onToggle 同步宿主。',
+    '带 View Transitions 动效的明暗主题切换按钮(Chrome 111+)。点击时以 clip-path 形状揭示新主题,不支持时静默降级。setTheme 可注入 bridge.setThemeMode 同步宿主。',
   importCode: `import { ThemeToggler } from '@fluent-jade/ui';`,
   sections: [
     {
       title: '基础用法',
-      description: '默认圆形 clip-path,点击在亮/暗间切换。自动使用 bridge.setThemeMode 同步到 JadeView 宿主,无需额外配置。',
+      description: '默认圆形 clip-path,点击在亮/暗间切换。setTheme 注入 bridge.setThemeMode 即可同步 JadeView 宿主。',
       demo: (
         <div className="flex justify-center p-6">
           <ThemeToggler />
@@ -794,10 +794,11 @@ const themetoggler: DocDef = {
       ),
       code: `
 import { ThemeToggler } from '@fluent-jade/ui';
+import { setThemeMode } from '@fluent-jade/bridge';
 
 export function ThemeTogglerDemo() {
-  // 自动同步到 bridge 宿主,零配置
-  return <ThemeToggler />;
+  // 注入 bridge setter,一键同步宿主
+  return <ThemeToggler setTheme={setThemeMode} />;
 }`,
     },
     {
@@ -817,16 +818,16 @@ export function ThemeTogglerCenterDemo() {
     },
     {
       title: '受控模式',
-      description: '通过 theme / onThemeChange 受控接入外部状态管理。非受控模式下已自动同步宿主,受控模式适用于需要自定义切换逻辑的场景。',
+      description: '通过 theme / onThemeChange 受控接入外部状态管理。setTheme 注入 bridge 后可完全同步宿主。',
       demo: <ThemeTogglerControlledPreview />,
       code: `
 import { useState } from 'react';
 import { ThemeToggler } from '@fluent-jade/ui';
 import { setThemeMode, useTheme } from '@fluent-jade/bridge';
 
-// 非受控模式:零配置,自动同步宿主
+// 非受控 + bridge 注入
 export function AutoDemo() {
-  return <ThemeToggler />;
+  return <ThemeToggler setTheme={setThemeMode} />;
 }
 
 // 受控模式:自定义切换逻辑
@@ -835,7 +836,7 @@ export function ControlledDemo() {
   return (
     <ThemeToggler
       theme={mode === 'dark' ? 'dark' : 'light'}
-      onThemeChange={(t) => setThemeMode(t)}
+      onThemeChange={setThemeMode}
     />
   );
 }`,
@@ -846,6 +847,7 @@ export function ControlledDemo() {
     { name: 'fromCenter', type: 'boolean', default: 'false', description: '从视口中心展开而非按钮位置。' },
     { name: 'theme', type: "'light' | 'dark'", description: '受控主题值,缺省则内部自动管理。' },
     { name: 'onThemeChange', type: '(theme: "light" | "dark") => void', description: '主题切换回调(受控模式)。' },
+    { name: 'setTheme', type: '(theme: "light" | "dark") => void | Promise<void>', description: '主题写入(如 bridge.setThemeMode);缺省只切 data-theme。' },
   ],
 };
 

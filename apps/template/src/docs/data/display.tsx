@@ -1796,9 +1796,9 @@ export function DockMagnifyExample() {
     },
     {
       title: '点击事件 / 链接',
-      description: '推荐把 onClick 挂在 Dock 上,子项用 value 标识;也可单项 onClick。href 做跳转。',
+      description: '推荐把 onValueClick 挂在 Dock 上,子项用 value 标识;也可单项 onClick。href 做跳转。',
       demo: (
-        <Dock onClick={(v) => console.log('dock click', v)}>
+        <Dock onValueClick={(v) => console.log('dock click', v)}>
           <DockIcon value="home" label="首页"><HomeRegular size={20} /></DockIcon>
           <DockIcon value="search" label="搜索"><SearchRegular size={20} /></DockIcon>
           <DockIcon value="settings" label="设置" href="#settings"><SettingsRegular size={20} /></DockIcon>
@@ -1810,14 +1810,14 @@ import { HomeRegular, SearchRegular, SettingsRegular } from '@fluent-jade/icon';
 
 export function DockClickExample() {
   return (
-    <Dock onClick={(value) => console.log(value)}>
+    <Dock onValueClick={(value) => console.log(value)}>
       <DockIcon value="home" label="首页">
         <HomeRegular size={20} />
       </DockIcon>
       <DockIcon value="search" label="搜索">
         <SearchRegular size={20} />
       </DockIcon>
-      {/* 也可单项 onClick;与 Dock.onClick 并存时先单项 */}
+      {/* 也可单项 onClick;与 Dock.onValueClick 并存时先单项 */}
       <DockIcon value="settings" label="设置" href="#settings">
         <SettingsRegular size={20} />
       </DockIcon>
@@ -1832,15 +1832,15 @@ export function DockClickExample() {
     { name: 'iconDistance', type: 'number', default: '140', description: '影响半径(px)。' },
     { name: 'direction', type: "'top' | 'middle' | 'bottom'", default: "'middle'", description: '图标垂直对齐。' },
     { name: 'disableMagnification', type: 'boolean', default: 'false', description: '关闭放大效果。' },
-    { name: 'onClick', type: '(value, e) => void', description: '统一点击;value 取自 DockIcon.value,缺省回退 label。' },
+    { name: 'onValueClick', type: '(value, e) => void', description: '统一 value 点击;value 取自 DockIcon.value,缺省回退 label。' },
   ],
   extraApis: [
     {
       title: 'DockIcon',
       rows: [
-        { name: 'value', type: 'string', description: '业务标识,供 Dock.onClick 使用。' },
+        { name: 'value', type: 'string', description: '业务标识,供 Dock.onValueClick 使用。' },
         { name: 'label', type: 'string', description: '悬停 tip(配色/层级对齐 Tooltip)。' },
-        { name: 'onClick', type: '(e) => void', description: '单项点击;与 Dock.onClick 并存时先触发。' },
+        { name: 'onClick', type: '(e) => void', description: '单项点击;与 Dock.onValueClick 并存时先触发。' },
         { name: 'href', type: 'string', description: '点击跳转链接。' },
         { name: 'external', type: 'boolean', default: 'false', description: '新标签页打开(需 href)。' },
         { name: 'className', type: 'string', description: '自定义类名。' },

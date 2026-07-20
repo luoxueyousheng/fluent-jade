@@ -29,7 +29,7 @@ export interface DataGridProps<Row extends { id: string }> {
 }
 
 /** left / center / right → CSS 类;right 兼容旧类名 num */
-export const cellAlign = (align?: 'left' | 'center' | 'right') =>
+const cellAlign = (align?: 'left' | 'center' | 'right') =>
   align === 'right' ? 'num align-right'
     : align === 'center' ? 'align-center'
     : align === 'left' ? 'align-left'

@@ -1,7 +1,7 @@
 /* Dock — MacOS Dock 风格停靠栏。
  * 对齐 MagicUI:motion 弹簧 + 鼠标 X 距离放大。
  * label 仅显示「当前热点」最近图标,快进快出。
- * onClick 可挂在 Dock 上统一处理(子项用 value 标识)。
+ * onValueClick 可挂在 Dock 上统一处理(子项用 value 标识)。
  */
 import {
   Children, cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useRef, useState,
@@ -31,16 +31,16 @@ export interface DockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick
   /** 关闭放大效果 */
   disableMagnification?: boolean;
   /**
-   * 统一点击回调。value 取自 DockIcon.value,缺省回退 label。
+   * 统一 value 点击回调。value 取自 DockIcon.value,缺省回退 label。
    * 子项自身 onClick 仍会先触发。
    */
-  onClick?: (value: string | undefined, e: MouseEvent<HTMLElement>) => void;
+  onValueClick?: (value: string | undefined, e: MouseEvent<HTMLElement>) => void;
 }
 
 export interface DockIconProps {
   children?: ReactNode;
   className?: string;
-  /** 业务标识,供 Dock.onClick 使用 */
+  /** 业务标识,供 Dock.onValueClick 使用 */
   value?: string;
   /** 悬停标签(仅当前热点图标显示) */
   label?: string;
@@ -48,7 +48,7 @@ export interface DockIconProps {
   href?: string;
   /** 新标签页打开(需 href) */
   external?: boolean;
-  /** 单项点击;与 Dock.onClick 并存时先触发本回调 */
+  /** 单项点击;与 Dock.onValueClick 并存时先触发本回调 */
   onClick?: (e: MouseEvent<HTMLElement>) => void;
   /** 内部:由 Dock 注入 */
   mouseX?: MotionValue<number>;
@@ -57,7 +57,7 @@ export interface DockIconProps {
   distance?: number;
   disableMagnification?: boolean;
   /** 内部:由 Dock 注入 */
-  onDockClick?: (value: string | undefined, e: MouseEvent<HTMLElement>) => void;
+  onDockValueClick?: (value: string | undefined, e: MouseEvent<HTMLElement>) => void;
 }
 
 interface DockCtx {
@@ -66,7 +66,7 @@ interface DockCtx {
   magnification: number;
   distance: number;
   disableMagnification: boolean;
-  onDockClick?: (value: string | undefined, e: MouseEvent<HTMLElement>) => void;
+  onDockValueClick?: (value: string | undefined, e: MouseEvent<HTMLElement>) => void;
 }
 
 const DockContext = createContext<DockCtx | null>(null);
@@ -79,7 +79,7 @@ export function Dock({
   iconDistance = DEFAULT_DISTANCE,
   direction = 'middle',
   disableMagnification = false,
-  onClick,
+  onValueClick,
   ...props
 }: DockProps) {
   const mouseX = useMotionValue(Infinity);
@@ -92,7 +92,7 @@ export function Dock({
         magnification: iconMagnification,
         distance: iconDistance,
         disableMagnification,
-        onDockClick: onClick,
+        onDockValueClick: onValueClick,
       });
     }
     return child;
@@ -105,7 +105,7 @@ export function Dock({
       magnification: iconMagnification,
       distance: iconDistance,
       disableMagnification,
-      onDockClick: onClick,
+      onDockValueClick: onValueClick,
     }}>
       <div
         onMouseMove={disableMagnification ? undefined : (e) => mouseX.set(e.pageX)}
@@ -139,7 +139,7 @@ export function DockIcon({
   magnification: magProp,
   distance: distProp,
   disableMagnification: disableProp,
-  onDockClick: onDockClickProp,
+  onDockValueClick: onDockValueClickProp,
 }: DockIconProps) {
   const ctx = useContext(DockContext);
   const mouseX = mouseXProp ?? ctx?.mouseX;
@@ -147,7 +147,7 @@ export function DockIcon({
   const magnification = magProp ?? ctx?.magnification ?? DEFAULT_MAGNIFICATION;
   const distance = distProp ?? ctx?.distance ?? DEFAULT_DISTANCE;
   const disableMagnification = disableProp ?? ctx?.disableMagnification ?? false;
-  const onDockClick = onDockClickProp ?? ctx?.onDockClick;
+  const onDockValueClick = onDockValueClickProp ?? ctx?.onDockValueClick;
 
   const ref = useRef<HTMLDivElement>(null);
   const padding = Math.max(4, size * 0.15);
@@ -171,15 +171,17 @@ export function DockIcon({
     damping: 12,
   });
 
+  /* 仅当前热点(鼠标落在放大后图标半宽内)显示 label */
   const [tipOn, setTipOn] = useState(false);
   useEffect(() => {
     if (!label) return;
     if (disableMagnification) return;
+    const threshold = magnification * 0.55;
     const unsub = distanceCalc.on('change', (v) => {
-      setTipOn(Math.abs(v) <= size * 0.55);
+      setTipOn(Math.abs(v) <= threshold);
     });
     return unsub;
-  }, [distanceCalc, size, label, disableMagnification]);
+  }, [distanceCalc, magnification, label, disableMagnification]);
 
   useEffect(() => {
     if (!label || disableMagnification || !mouseX) return;
@@ -192,9 +194,9 @@ export function DockIcon({
   const handleClick = useCallback((e: MouseEvent<HTMLElement>) => {
     onClick?.(e);
     if (!e.defaultPrevented) {
-      onDockClick?.(value ?? label, e);
+      onDockValueClick?.(value ?? label, e);
     }
-  }, [onClick, onDockClick, value, label]);
+  }, [onClick, onDockValueClick, value, label]);
 
   const content = href ? (
     <a
