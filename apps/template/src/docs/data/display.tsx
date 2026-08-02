@@ -12,7 +12,7 @@ import {
   Divider,
   Dock, DockIcon,
   Empty,
-  Expander,
+  Expander, ExpanderGroup,
   Image,
   Marquee,
   SettingsCard,
@@ -193,39 +193,104 @@ const expander: DocDef = {
   name: 'Expander',
   cn: '展开器',
   description:
-    'WinUI Expander:摘要行 + 可折叠内容区,chevron 随开合旋转。基于原生 details/summary,无 JS 状态。',
-  importCode: `import { Expander } from '@fluent-jade/ui';`,
+    'WinUI Expander:标题/描述/图标/动作区 + 可折叠内容区,支持受控/非受控、subtle 外观、ExpanderGroup 单/多展开与键盘导航。',
+  importCode: `import { Expander, ExpanderGroup } from '@fluent-jade/ui';`,
   sections: [
     {
       title: '基础用法',
+      description: 'defaultExpanded 非受控;expanded 受控。带图标、描述和右侧动作区。',
       demo: (
-        <div className="w-full max-w-[260px]">
-          <Expander summary="什么是 Mica 材质?" defaultOpen>
+        <div className="w-full max-w-[320px]">
+          <Expander
+            title="什么是 Mica 材质?"
+            description="窗口背景效果说明"
+            icon={<InfoRegular />}
+            actions={<Switch aria-label="启用" />}
+            defaultExpanded
+          >
             <p style={{ color: 'var(--text-2)' }}>Mica 以桌面壁纸为底进行着色,仅作用于窗口背景,性能开销低于 Acrylic。</p>
           </Expander>
         </div>
       ),
       code: `
-import { Expander } from '@fluent-jade/ui';
+import { Expander, Switch } from '@fluent-jade/ui';
+import { InfoRegular } from '@fluent-jade/icon';
 
 export function ExpanderExample() {
   return (
-    <div className="w-[360px]">
-      {/* 基于原生 details/summary,defaultOpen 控制初始展开 */}
-      <Expander summary="什么是 Mica 材质?" defaultOpen>
-        <p className="text-(--text-2)">
-          Mica 以桌面壁纸为底进行着色,仅作用于窗口背景,性能开销低于 Acrylic。
-        </p>
+    <Expander
+      title="什么是 Mica 材质?"
+      description="窗口背景效果说明"
+      icon={<InfoRegular />}
+      actions={<Switch />}
+      defaultExpanded
+    >
+      <p className="text-(--text-2)">
+        Mica 以桌面壁纸为底进行着色,仅作用于窗口背景,性能开销低于 Acrylic。
+      </p>
+    </Expander>
+  );
+}`,
+    },
+    {
+      title: '分组(ExpanderGroup)',
+      description: 'expansionMode 支持 independent(各自独立) / single(手风琴单开) / multiple(多开)。',
+      demo: (
+        <div className="w-full max-w-[320px]">
+          <ExpanderGroup expansionMode="single">
+            <Expander title="通用设置" defaultExpanded>
+              <p className="text-(--text-2)">通用设置内容</p>
+            </Expander>
+            <Expander title="外观">
+              <p className="text-(--text-2)">外观设置内容</p>
+            </Expander>
+            <Expander title="通知">
+              <p className="text-(--text-2)">通知设置内容</p>
+            </Expander>
+          </ExpanderGroup>
+        </div>
+      ),
+      code: `
+import { Expander, ExpanderGroup } from '@fluent-jade/ui';
+
+export function ExpanderGroupExample() {
+  return (
+    <ExpanderGroup expansionMode="single">
+      <Expander title="通用设置" defaultExpanded>
+        <p>通用设置内容</p>
       </Expander>
-    </div>
+      <Expander title="外观">
+        <p>外观设置内容</p>
+      </Expander>
+      <Expander title="通知">
+        <p>通知设置内容</p>
+      </Expander>
+    </ExpanderGroup>
   );
 }`,
     },
   ],
   props: [
-    { name: 'summary', type: 'ReactNode', description: '摘要行内容(必填)。' },
-    { name: 'defaultOpen', type: 'boolean', default: 'false', description: '初始展开。' },
+    { name: 'title', type: 'ReactNode', description: '标题(必填)。' },
+    { name: 'description', type: 'ReactNode', description: '描述行。' },
+    { name: 'icon', type: 'ReactNode', description: '左侧图标。' },
+    { name: 'actions', type: 'ReactNode', description: '右侧动作区(如 Switch / Button)。' },
+    { name: 'expanded', type: 'boolean', description: '受控展开。' },
+    { name: 'defaultExpanded', type: 'boolean', default: 'false', description: '初始展开(非受控)。' },
+    { name: 'disabled', type: 'boolean', default: 'false', description: '禁用。' },
+    { name: 'appearance', type: "'default' | 'subtle'", default: "'default'", description: '外观:default 卡片 / subtle 透明。' },
     { name: 'children', type: 'ReactNode', description: '折叠区内容。' },
+  ],
+  extraApis: [
+    {
+      title: 'ExpanderGroup',
+      rows: [
+        { name: 'expansionMode', type: "'independent' | 'single' | 'multiple'", default: "'independent'", description: '展开模式。' },
+        { name: 'value', type: 'string | string[] | null', description: '受控展开项(单开为 string,多开为数组)。' },
+        { name: 'defaultValue', type: 'string | string[] | null', description: '初始展开项。' },
+        { name: 'collapsible', type: 'boolean', default: 'true', description: '单开模式下是否允许全部收起。' },
+      ],
+    },
   ],
 };
 

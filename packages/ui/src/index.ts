@@ -9,8 +9,8 @@ export {
 export { Form, type FormProps, type FormItemProps, type Rule } from './components/Form';
 export {
   Checkbox, Radio, Switch, Toggle, ProgressBar, ProgressRing, InfoBar,
-  Card, CardHeader, CardBody, CardFooter, Expander, Badge, Skeleton, Empty,
-  type CheckboxProps, type EmptyProps, type ProgressBarProps, type ProgressRingProps,
+  Card, CardHeader, CardBody, CardFooter, Expander, ExpanderGroup, Badge, Skeleton, Empty,
+  type CheckboxProps, type EmptyProps, type ExpanderProps, type ExpanderGroupProps, type ProgressBarProps, type ProgressRingProps,
 } from './components/Basics';
 export { CheckboxGroup, type CheckboxGroupProps } from './components/CheckboxGroup';
 export { SwitchGroup, type SwitchGroupProps } from './components/SwitchGroup';

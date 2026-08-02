@@ -371,7 +371,7 @@ export const galleryPreviews: Record<string, ReactNode> = {
   ),
   expander: (
     <div className="w-[188px]">
-      <Expander summary="什么是 Mica?" defaultOpen>
+      <Expander title="什么是 Mica?" defaultExpanded>
         <p className="m-0 text-[12px] text-(--text-2)">以壁纸着色的窗口材质。</p>
       </Expander>
     </div>

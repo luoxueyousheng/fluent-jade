@@ -1,20 +1,53 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppShell, useToast, type NavEntry } from '@fluent-jade/ui';
-import { HomeRegular, SettingsRegular } from '@fluent-jade/icon';
+import {
+  AppsRegular,
+  CalendarLtrRegular,
+  ChatRegular,
+  DocumentRegular,
+  GridRegular,
+  HomeRegular,
+  ImageRegular,
+  ListRegular,
+  NavigationRegular,
+  PanelLeftRegular,
+  SettingsRegular,
+  TableRegular,
+  TextFontRegular,
+} from '@fluent-jade/icon';
 import { ready, configure, useOn, hasJade, type ToastPayload } from '@fluent-jade/bridge';
 import { HomePage } from './pages/HomePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { DocPage } from './docs/DocPage';
 import { docByKey, docGroups } from './docs/registry';
 
-/* 左侧导航:细分到每个组件(分组标题 + 组件项),文档注册表驱动;
- * 组件检索走首页画廊(预览卡片 + 搜索) */
+/* 左侧导航:大分类可折叠(子导航),每项带图标;文档注册表驱动 */
+const CATEGORY_ICON: Record<string, React.ReactNode> = {
+  '指南': <DocumentRegular />,
+  '通用': <AppsRegular />,
+  '输入': <TextFontRegular />,
+  '文本与表单': <TextFontRegular />,
+  '选择': <ListRegular />,
+  '日期时间': <CalendarLtrRegular />,
+  '导航': <NavigationRegular />,
+  '集合': <TableRegular />,
+  '展示': <ImageRegular />,
+  '反馈': <ChatRegular />,
+  '扩展': <GridRegular />,
+  '外壳': <PanelLeftRegular />,
+};
+
 const NAV: NavEntry[] = [
   { key: 'home', label: '首页', icon: <HomeRegular /> },
-  ...docGroups.flatMap((g): NavEntry[] => [
-    { header: g.title },
-    ...g.items.map((d) => ({ key: d.key, label: [d.cn, d.name].filter(Boolean).join(' ') })),
-  ]),
+  ...docGroups.map((g): NavEntry => ({
+    key: `group-${g.title}`,
+    label: g.title,
+    icon: CATEGORY_ICON[g.title],
+    children: g.items.map((d) => ({
+      key: d.key,
+      label: [d.cn, d.name].filter(Boolean).join(' '),
+    })),
+  })),
   { key: 'settings', label: '设置', icon: <SettingsRegular />, bottom: true },
 ];
 
