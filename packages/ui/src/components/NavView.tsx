@@ -109,6 +109,16 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
     return iCurr > iPrev ? 'down' : 'up';
   }, [indicatorTarget, value, visibleOrder]);
 
+  /* 切换选中项时重启指示条入场动画:
+     先移除方向类 → 强制回流 → 同帧加回,CSS animation 重新跑 */
+  useEffect(() => {
+    const ind = indRef.current;
+    if (!ind || !selectionDirection) return;
+    ind.classList.remove('nav-indicator-enter-down', 'nav-indicator-enter-up');
+    void ind.offsetWidth;   // 强制回流,确保移除生效
+    ind.classList.add(`nav-indicator-enter-${selectionDirection}`);
+  }, [selectionDirection]);
+
   const move = useCallback((animate: unknown = true) => {
     const nav = navRef.current, ind = indRef.current;
     if (!nav || !ind) return;
