@@ -8,6 +8,7 @@ import { cn } from '../cn';
 import { useMergedState } from '../useMergedState';
 import { TitleBar, type TitleBarProps } from './TitleBar';
 import { NavView, type NavEntry } from './NavView';
+import { StatusBar } from './StatusBar';
 
 export interface AppShellProps {
   /** 'multi' 多页(侧导航 + 汉堡)/ 'single' 单页(仅标题栏) */
@@ -46,6 +47,8 @@ export interface AppShellProps {
 
   /** 内容区(自动包 .content/.content-inner 滚动容器) */
   children: ReactNode;
+  /** 底部状态栏(可选):start / center / end 三段 */
+  statusBar?: { start?: ReactNode; center?: ReactNode; end?: ReactNode };
   className?: string;
 }
 
@@ -55,7 +58,7 @@ export function AppShell({
   titleBarActions, onBack, backDisabled,
   items = [], value = '', onChange,
   navHeader, collapsed: collapsedProp, defaultCollapsed = false, onCollapsedChange,
-  children, className,
+  children, statusBar, className,
 }: AppShellProps) {
   const multi = mode !== 'single';
   const [collapsed, setCollapsed] = useMergedState(defaultCollapsed, collapsedProp, onCollapsedChange);
@@ -72,9 +75,18 @@ export function AppShell({
   }, [frame]);
 
   const content = (
-    <main className="content">
-      <div className="content-inner">{children}</div>
-    </main>
+    <>
+      <main className="content">
+        <div className="content-inner">{children}</div>
+      </main>
+      {statusBar && (
+        <StatusBar
+          start={statusBar.start}
+          center={statusBar.center}
+          end={statusBar.end}
+        />
+      )}
+    </>
   );
 
   return (

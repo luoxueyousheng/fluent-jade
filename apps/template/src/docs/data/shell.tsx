@@ -5,18 +5,22 @@ import {
   Button,
   NavView,
   SearchBox,
+  StatusBarItem,
   TitleBar,
   useToast,
   type NavEntry,
 } from '@fluent-jade/ui';
 import {
+  CheckmarkCircleRegular,
   DocumentRegular,
   HomeRegular,
   ImageRegular,
+  InfoRegular,
   MoreHorizontalRegular,
   SearchRegular,
   SettingsRegular,
   StackRegular,
+  WarningRegular,
 } from '@fluent-jade/icon';
 import type { DocDef } from '../types';
 
@@ -194,6 +198,27 @@ export function DefaultCollapsedExample() {
   );
 }`,
     },
+    {
+      title: '底部状态栏(statusBar)',
+      description: 'statusBar 在内容区下方加一段状态栏:start/center/end 三段,支持 StatusBarItem 静态/交互项。',
+      demo: <AppShellStatusBarDemo />,
+      code: `
+import { AppShell, StatusBarItem } from '@fluent-jade/ui';
+import { CheckmarkCircleRegular, InfoRegular, WarningRegular } from '@fluent-jade/icon';
+
+export function StatusBarExample() {
+  return (
+    <AppShell mode="single" appName="带状态栏的应用" controls="host"
+              statusBar={{
+                start: <StatusBarItem icon={<CheckmarkCircleRegular />}>已保存</StatusBarItem>,
+                center: <StatusBarItem icon={<InfoRegular />}>就绪</StatusBarItem>,
+                end: <StatusBarItem icon={<WarningRegular />} interactive onClick={() => alert('详情')}>3 条警告</StatusBarItem>,
+              }}>
+      <p>内容区;底部状态栏固定在最下方。</p>
+    </AppShell>
+  );
+}`,
+    },
   ],
   props: [
     { name: 'mode', type: "'multi' | 'single'", default: "'multi'", description: '多页(侧导航 + 汉堡)/ 单页(仅标题栏)。' },
@@ -205,11 +230,32 @@ export function DefaultCollapsedExample() {
     { name: 'items / value', type: 'NavEntry[] / string', description: 'multi 模式的导航条目与当前键。' },
     { name: 'navHeader', type: 'ReactNode', description: '导航列表上方固定插槽(如搜索框)。' },
     { name: 'collapsed / defaultCollapsed', type: 'boolean', default: '— / false', description: '折叠态受控 / 非受控(汉堡驱动)。' },
+    { name: 'statusBar', type: '{ start?, center?, end? }', description: '底部状态栏:start/center/end 三段内容。' },
     { name: 'children', type: 'ReactNode', description: '内容区(自动包滚动容器)。' },
   ],
   events: [
     { name: 'onChange', type: '(key: string) => void', description: '导航切换(multi 模式)。' },
     { name: 'onCollapsedChange', type: '(collapsed: boolean) => void', description: '折叠态变化。' },
+  ],
+  extraApis: [
+    {
+      title: 'StatusBar',
+      rows: [
+        { name: 'start', type: 'ReactNode', description: '左侧区域。' },
+        { name: 'center', type: 'ReactNode', description: '中间区域。' },
+        { name: 'end', type: 'ReactNode', description: '右侧区域。' },
+        { name: 'ariaLabel', type: 'string', default: "'状态栏'", description: '无障碍标签。' },
+      ],
+    },
+    {
+      title: 'StatusBarItem',
+      rows: [
+        { name: 'children', type: 'ReactNode', description: '内容。' },
+        { name: 'icon', type: 'ReactNode', description: '图标。' },
+        { name: 'interactive', type: 'boolean', default: 'false', description: '可交互按钮态(hover 背景)。' },
+        { name: 'onClick', type: '() => void', description: '点击回调。' },
+      ],
+    },
   ],
 };
 
@@ -307,6 +353,21 @@ function AppShellHostDemo() {
           <p style={{ color: 'var(--text-2)' }}>maximized 受控:点最大化钮切换「最大化/还原」图标。</p>
         </AppShell>
       </div>
+    </div>
+  );
+}
+
+function AppShellStatusBarDemo() {
+  return (
+    <div style={{ height: 320, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)', background: 'var(--layer)' }}>
+      <AppShell mode="single" appName="带状态栏" controls="none"
+                statusBar={{
+                  start: <StatusBarItem icon={<CheckmarkCircleRegular />}>已保存</StatusBarItem>,
+                  center: <StatusBarItem icon={<InfoRegular />}>就绪</StatusBarItem>,
+                  end: <StatusBarItem icon={<WarningRegular />} interactive onClick={() => alert('3 条警告')}>3 条警告</StatusBarItem>,
+                }}>
+        <p style={{ color: 'var(--text-2)' }}>内容区;底部状态栏固定在最下方。</p>
+      </AppShell>
     </div>
   );
 }

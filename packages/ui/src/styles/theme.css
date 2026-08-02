@@ -249,6 +249,32 @@ html[data-mock] body { background: var(--bg) !important; }
  * 标题栏 40px；拖动区由 HTML 属性 jade-region-drag 声明（右键不弹系统标题栏菜单），
  * 非 Windows 的 CSS 拖动兜底见 §27。导航透明底（透出 Mica 材质），激活项加粗。 */
 .app, #app { display: grid; grid-template-rows: 40px 1fr; height: 100%; }
+/* 含状态栏时改为三行:标题栏 / 内容 / 状态栏 */
+.app:has(.status-bar) { grid-template-rows: 40px 1fr auto; }
+
+/* StatusBar(应用底部状态栏:start/center/end 三段) */
+.status-bar {
+  min-width: 0; min-height: 26px; padding: 0 6px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  color: var(--text-3); font-size: 12px;
+  background: var(--layer); border-top: 1px solid var(--divider);
+}
+.status-bar-region { min-width: 0; display: flex; align-items: stretch; overflow: hidden; }
+.status-bar-center { justify-content: center; }
+.status-bar-end { justify-content: flex-end; }
+.status-bar-item {
+  min-width: 0; min-height: 25px; padding: 0 7px;
+  display: inline-flex; align-items: center; gap: 5px;
+  overflow: hidden; color: inherit; white-space: nowrap;
+}
+button.status-bar-item {
+  font: inherit; font-size: inherit; background: transparent; border: 0;
+  border-radius: 3px; cursor: pointer;
+}
+.status-bar-item.interactive:hover { color: var(--text-1); background: var(--fill-subtle); }
+.status-bar-item.interactive:focus-visible { outline: 2px solid var(--text-1); outline-offset: -2px; }
+.status-bar-icon { width: 14px; height: 14px; display: inline-flex; flex: 0 0 14px; }
 
 .title-bar {
   display: flex; align-items: center; gap: var(--sp-s);

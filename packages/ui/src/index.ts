@@ -82,3 +82,4 @@ export { ThemeToggler, type ThemeTogglerProps } from './components/ThemeToggler'
 export { Dock, DockIcon, type DockProps, type DockIconProps } from './components/Dock';
 export { DataView, type DataViewProps } from './components/DataView';
 export { SelectionBar, type SelectionBarProps } from './components/SelectionBar';
+export { StatusBar, StatusBarItem, type StatusBarProps, type StatusBarItemProps } from './components/StatusBar';

@@ -142,6 +142,46 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
     setCanScrollDown(nav.scrollTop + nav.clientHeight < nav.scrollHeight - 1);
   }, []);
 
+  /* 展开/收起动画期间指示条跟随:rAF 循环跟踪 active 项位置,
+     直到 CSS grid-rows 动画结束(transitionend)或超时兜底 */
+  const prevExpanded = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (prevExpanded.current === expanded) return;   // 首次或 Set 未变时不跑
+    prevExpanded.current = expanded;
+    const nav = navRef.current;
+    if (!nav) return;
+
+    let raf = 0;
+    let lastY = -1;
+    const follow = () => {
+      const item = nav.querySelector<HTMLElement>('.nav-item.active');
+      if (item) {
+        const r = item.getBoundingClientRect();
+        const navRect = nav.getBoundingClientRect();
+        const y = r.top - navRect.top;
+        if (Math.abs(y - lastY) > 0.5) {
+          lastY = y;
+          move(false);
+        }
+      }
+      raf = requestAnimationFrame(follow);
+    };
+    follow();
+
+    const stop = () => { cancelAnimationFrame(raf); move(false); };
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName === 'grid-template-rows') stop();
+    };
+    nav.addEventListener('transitionend', onEnd);
+    const timer = setTimeout(stop, 220);   // 动画 180ms + 余量
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(timer);
+      nav.removeEventListener('transitionend', onEnd);
+    };
+  }, [expanded, move]);
+
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
