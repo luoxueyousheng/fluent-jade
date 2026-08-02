@@ -16,7 +16,7 @@ import {
   ArrowLeftRegular,
   DismissRegular,
   MaximizeRegular,
-  NavigationRegular,
+  PanelLeftRegular,
   SquareMultipleRegular,
   SubtractRegular,
 } from '@fluent-jade/icon';
@@ -91,7 +91,7 @@ export function TitleBar({
       )}
       {onMenu && (
         <button className="tb-nav-btn" aria-label="展开或收缩导航" onClick={onMenu} {...NO_DRAG}>
-          <NavigationRegular size={14} />
+          <PanelLeftRegular size={14} />
         </button>
       )}
       {logo ?? <AppsRegular className="logo" />}

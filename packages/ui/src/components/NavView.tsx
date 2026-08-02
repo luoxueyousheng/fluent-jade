@@ -9,7 +9,7 @@ import { createPortal } from 'react-dom';
 import { cn } from '../cn';
 import {
   ChevronDownRegular,
-  NavigationRegular,
+  PanelLeftRegular,
 } from '@fluent-jade/icon';
 
 export interface NavItemDef {
@@ -307,7 +307,7 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
       {onCollapsedChange && (
         <button className='nav-item nav-hamburger' title='展开/收缩导航' aria-label='展开或收缩导航'
                 onClick={() => onCollapsedChange(!collapsed)}>
-          <NavigationRegular />
+          <PanelLeftRegular />
           <span className='label'>导航</span>
         </button>
       )}
