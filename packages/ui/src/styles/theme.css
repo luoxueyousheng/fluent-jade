@@ -1334,6 +1334,44 @@ html[data-inactive] .accent-text { filter: saturate(0.6); }
 .dg-head .dg-cell.align-left { justify-content: flex-start; }
 .dg-row:focus-visible { outline: 2px solid var(--text-1); outline-offset: -2px; }
 
+/* Table controls(搜索 + 筛选控制栏) */
+.tbl-controls {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.tbl-search { position: relative; flex: 1; max-width: 320px; }
+.tbl-search .searchbox { width: 100%; }
+.tbl-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 18px; height: 18px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; background: transparent; color: var(--text-2);
+  font-size: 14px; cursor: pointer;
+}
+.tbl-clear:hover { background: var(--fill-subtle); color: var(--text-1); }
+.tbl-filter { flex: none; }
+
+/* DataGrid sticky 表头(显式开 stickyHeader 时吸顶;缺省不吸,避免嵌套滚动问题) */
+.datagrid.sticky-header .dg-head { position: sticky; top: 0; z-index: 2; }
+.datagrid.sticky-header .dg-body { position: relative; z-index: 1; }
+
+/* DataView:数据视图布局 */
+.data-view { display: flex; flex-direction: column; min-height: 0; }
+.data-view--auto { height: auto; }
+.data-view--fill { height: 100%; min-height: 0; }
+.data-view-header { flex: none; padding-bottom: 8px; }
+.data-view-body { flex: 1; min-height: 0; overflow: auto; }
+.data-view-footer { flex: none; padding-top: 8px; }
+
+/* SelectionBar:行选择状态栏 */
+.selection-bar {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 8px; margin-bottom: 8px;
+  border-radius: var(--r-control);
+  background: var(--fill-subtle);
+  color: var(--text-2); font-size: 12.5px;
+}
+.selection-bar-label { color: var(--text-1); font-weight: 600; }
+
 /* ---- 24. 自绘 ComboBox（Acrylic 下拉浮层，替代原生 select 弹窗） ---- */
 .combobox { position: relative; display: inline-block; }
 .combo-trigger {

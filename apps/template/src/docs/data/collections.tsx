@@ -11,6 +11,7 @@ import {
   type ColumnType,
   type DataGridColumn,
   type MenuItemDef,
+  type TableControls,
 } from '@fluent-jade/ui';
 import type { DocDef } from '../types';
 
@@ -40,7 +41,7 @@ const table: DocDef = {
   name: 'Table',
   cn: '表格',
   description:
-    'antd API 的数据表格:columns 声明列(dataIndex / render / sorter / align / width),内置分页与排序(点击表头循环 升 → 降 → 无),翻页与排序时表体淡入刷新;rowSelection 行选择(表头全选带半选态 / radio 单选 / 按行禁用)、toolbar 工具条插槽、rowContextMenu 行右键菜单、striped 斑马纹、size="small" 紧凑密度、loading 加载遮罩、empty 自定义空态、maxHeight 控表体滚动高(表头吸顶)。行高亮与选中样式为 WinUI DataGrid 形态。',
+    'antd API 的数据表格:columns 声明列(dataIndex / render / sorter / align / width),内置分页与排序(点击表头循环 升 → 降 → 无),翻页与排序时表体淡入刷新;rowSelection 行选择(表头全选带半选态 / radio 单选 / 按行禁用)、toolbar 工具条插槽、controls 搜索/筛选控制栏、rowContextMenu 行右键菜单、striped 斑马纹、size="small" 紧凑密度、loading 加载遮罩、empty 自定义空态、maxHeight 控表体滚动高、stickyHeader/stickyColumns 吸附。行高亮与选中样式为 WinUI DataGrid 形态。',
   importCode: `import { Table, type ColumnType } from '@fluent-jade/ui';`,
   sections: [
     {
@@ -277,6 +278,79 @@ export function TableToolbarExample() {
 }`,
     },
     {
+      title: '搜索与筛选控制栏',
+      description: 'controls 开启全局搜索 + 列筛选;clearAll 一键清除。',
+      demo: <TableControlsDemo />,
+      code: `
+import { Table, type ColumnType, type TableControls } from '@fluent-jade/ui';
+
+interface Row { key: string; name: string; type: string; size: number }
+
+const rows: Row[] = [
+  { key: '1', name: 'theme.css', type: '样式', size: 48 },
+  { key: '2', name: 'Button.tsx', type: '组件', size: 2 },
+  { key: '3', name: 'Table.tsx', type: '组件', size: 6 },
+  { key: '4', name: 'bridge.ts', type: '桥接', size: 4 },
+  { key: '5', name: 'App.tsx', type: '入口', size: 5 },
+];
+
+const columns: ColumnType<Row>[] = [
+  { title: '名称', dataIndex: 'name', width: '2fr', sorter: (a, b) => a.name.localeCompare(b.name) },
+  { title: '类型', dataIndex: 'type', align: 'center' },
+  { title: '大小 (KB)', dataIndex: 'size', align: 'right', sorter: (a, b) => a.size - b.size },
+];
+
+const controls: TableControls<Row> = {
+  search: true,
+  filters: [
+    { columnKey: 'type', label: '类型', options: [
+      { value: '组件', label: '组件' },
+      { value: '样式', label: '样式' },
+      { value: '桥接', label: '桥接' },
+      { value: '入口', label: '入口' },
+    ] },
+  ],
+  clearAll: true,
+};
+
+export function TableControlsExample() {
+  return (
+    <Table columns={columns} dataSource={rows} controls={controls} pagination={false} />
+  );
+}`,
+    },
+    {
+      title: '吸附列(stickyColumns)',
+      description: 'stickyColumns 指定左侧吸附列;stickyHeader 让表头吸顶。',
+      demo: <TableStickyDemo />,
+      code: `
+import { Table, type ColumnType } from '@fluent-jade/ui';
+
+interface Row { key: string; name: string; type: string; size: number; version: string }
+
+const rows: Row[] = Array.from({ length: 8 }, (_, i) => ({
+  key: String(i + 1),
+  name: 'file-' + (i + 1) + '.ts',
+  type: i % 3 === 0 ? '组件' : i % 3 === 1 ? '样式' : '逻辑',
+  size: ((i * 7) % 40) + 1,
+  version: 'v1.' + i,
+}));
+
+const columns: ColumnType<Row>[] = [
+  { title: '名称', dataIndex: 'name', width: '180px', sorter: (a, b) => a.name.localeCompare(b.name) },
+  { title: '类型', dataIndex: 'type', align: 'center', width: '90px' },
+  { title: '大小 (KB)', dataIndex: 'size', align: 'right', width: '100px', sorter: (a, b) => a.size - b.size },
+  { title: '版本', dataIndex: 'version', align: 'center', width: '80px' },
+  { title: '描述', key: 'desc', width: '1fr', render: (_v, r) => '描述 ' + r.name },
+];
+
+export function TableStickyExample() {
+  return (
+    <Table columns={columns} dataSource={rows} stickyHeader stickyColumns={['name']} maxHeight={200} pagination={false} />
+  );
+}`,
+    },
+    {
       title: '行右键菜单',
       description: 'rowContextMenu 给每行挂 WinUI 右键菜单;items 可用函数按行生成,onPick 收菜单键与行记录。',
       demo: <TableCtxMenu />,
@@ -376,6 +450,7 @@ export function TableRowKeyExample() {
     { name: 'rowKey', type: 'string | (record) => string', default: "'key'", description: '行唯一键字段或取键函数。' },
     { name: 'pagination', type: 'false | { pageSize?, showSizeChanger?, pageSizeOptions? }', default: '{ pageSize: 10 }', description: '内置分页;showSizeChanger 显示每页条数下拉;false 关闭。' },
     { name: 'toolbar', type: 'ReactNode', description: '表格上方工具条插槽(按钮 / 搜索等)。' },
+    { name: 'controls', type: 'TableControls<T>', description: '搜索 + 筛选控制栏配置,见下表。' },
     { name: 'rowContextMenu', type: 'TableContextMenu<T>', description: '行右键菜单配置,见下表。' },
     { name: 'rowSelection', type: 'TableRowSelection<T>', description: '行选择配置,见下表。' },
     { name: 'loading', type: 'boolean', description: '加载遮罩(Spin,150ms 延迟)。' },
@@ -383,6 +458,8 @@ export function TableRowKeyExample() {
     { name: 'size', type: "'small' | 'middle'", default: "'middle'", description: 'small 紧凑密度(行高 32)。' },
     { name: 'empty', type: 'ReactNode', default: '<Empty image="simple" />', description: '无数据占位。' },
     { name: 'maxHeight', type: 'number', default: '320', description: '表体滚动高度上限(表头吸顶)。' },
+    { name: 'stickyHeader', type: 'boolean', default: 'false', description: '表头吸顶(显式开启)。' },
+    { name: 'stickyColumns', type: 'string[]', description: '左侧吸附列(列 key 或 dataIndex 数组)。' },
     { name: 'onRow', type: '(record) => { onClick?, onDoubleClick?, onContextMenu? }', description: '行级事件工厂。' },
   ],
   extraApis: [
@@ -391,6 +468,24 @@ export function TableRowKeyExample() {
       rows: [
         { name: 'items', type: 'MenuItemDef[] | (record) => MenuItemDef[]', description: '菜单项;函数形式按行生成。' },
         { name: 'onPick', type: '(key: string, record: T) => void', description: '选中菜单项回调(菜单键 + 行记录)。' },
+      ],
+    },
+    {
+      title: 'TableControls',
+      rows: [
+        { name: 'search', type: 'boolean', default: 'false', description: '显示全局搜索框。' },
+        { name: 'filters', type: 'TableFilter<T>[]', description: '列筛选定义数组。' },
+        { name: 'clearAll', type: 'boolean', default: 'true', description: '显示「清除全部」按钮。' },
+      ],
+    },
+    {
+      title: 'TableFilter',
+      rows: [
+        { name: 'columnKey', type: 'string', description: '列 key 或 dataIndex。' },
+        { name: 'label', type: 'ReactNode', description: '筛选按钮文案。' },
+        { name: 'options', type: 'TableFilterOption[]', description: '可选值列表:{ value, label }。' },
+        { name: 'mode', type: "'single' | 'multiple'", default: "'multiple'", description: '单选 / 多选。' },
+        { name: 'filterFn', type: '(record, values) => boolean', description: '自定义过滤;缺省按列值精确匹配。' },
       ],
     },
     {
@@ -484,6 +579,46 @@ function TableSizeChanger() {
     <div style={{ width: '100%' }}>
       <Table columns={columns} dataSource={SIZE_ROWS}
              pagination={{ pageSize: 5, showSizeChanger: true, pageSizeOptions: [5, 10, 20] }} />
+    </div>
+  );
+}
+
+function TableControlsDemo() {
+  const columns: ColumnType<Row>[] = [
+    { title: '名称', dataIndex: 'name', width: '2fr', sorter: (a, b) => a.name.localeCompare(b.name) },
+    { title: '类型', dataIndex: 'type', align: 'center' },
+    { title: '大小 (KB)', dataIndex: 'size', align: 'right', sorter: (a, b) => a.size - b.size },
+  ];
+  const controls: TableControls<Row> = {
+    search: true,
+    filters: [
+      { columnKey: 'type', label: '类型', options: [
+        { value: '组件', label: '组件' },
+        { value: '样式', label: '样式' },
+        { value: '桥接', label: '桥接' },
+        { value: '入口', label: '入口' },
+      ] },
+    ],
+    clearAll: true,
+  };
+  return (
+    <div style={{ width: '100%' }}>
+      <Table columns={columns} dataSource={ROWS.slice(0, 5)} controls={controls} pagination={false} />
+    </div>
+  );
+}
+
+function TableStickyDemo() {
+  const columns: ColumnType<Row>[] = [
+    { title: '名称', dataIndex: 'name', width: '180px', sorter: (a, b) => a.name.localeCompare(b.name) },
+    { title: '类型', dataIndex: 'type', align: 'center', width: '90px' },
+    { title: '大小 (KB)', dataIndex: 'size', align: 'right', width: '100px', sorter: (a, b) => a.size - b.size },
+    { title: '版本', key: 'version', align: 'center', width: '80px', render: (_v, r) => 'v1.' + r.key },
+    { title: '描述', key: 'desc', width: '1fr', render: (_v, r) => '描述 ' + r.name },
+  ];
+  return (
+    <div style={{ width: '100%' }}>
+      <Table columns={columns} dataSource={ROWS.slice(0, 8)} stickyHeader stickyColumns={['name']} maxHeight={200} pagination={false} />
     </div>
   );
 }

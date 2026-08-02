@@ -11,7 +11,9 @@ import {
   ChevronUpRegular,
 } from '@fluent-jade/icon';
 import { Checkbox, Empty } from './Basics';
+import { Button } from './Button';
 import { Pagination } from './Pagination';
+import { SearchBox } from './SearchBox';
 import { Spin } from './Spin';
 import { useFlyout, MenuList, type MenuItemDef } from './Flyout';
 
@@ -59,6 +61,25 @@ export interface TableContextMenu<T> {
   onPick: (key: string, record: T) => void;
 }
 
+export interface TableFilterOption {
+  value: string;
+  label: ReactNode;
+}
+
+export interface TableFilter<T> {
+  columnKey: string;
+  label: ReactNode;
+  options: TableFilterOption[];
+  mode?: 'single' | 'multiple';
+  filterFn?: (record: T, values: string[]) => boolean;
+}
+
+export interface TableControls<T> {
+  search?: boolean;
+  filters?: TableFilter<T>[];
+  clearAll?: boolean;
+}
+
 export interface TableProps<T> {
   columns: ColumnType<T>[];
   dataSource: T[];
@@ -71,6 +92,8 @@ export interface TableProps<T> {
   };
   /** 表格上方工具条插槽(放 Button / SearchBox / CommandBar 等) */
   toolbar?: ReactNode;
+  /** 搜索 + 筛选控制栏 */
+  controls?: TableControls<T>;
   /** 行右键菜单(整表一个浮层,按行取菜单项) */
   rowContextMenu?: TableContextMenu<T>;
   /** 行选择:表头全选(带半选态),radio 为单选 */
@@ -85,6 +108,10 @@ export interface TableProps<T> {
   empty?: ReactNode;
   /** 表体滚动高度上限(px),缺省 320 */
   maxHeight?: number;
+  /** 表头吸顶 */
+  stickyHeader?: boolean;
+  /** 左侧吸附列(列 key 或 dataIndex 数组) */
+  stickyColumns?: string[];
   className?: string;
 }
 
@@ -95,10 +122,13 @@ let tblSeq = 0;
 export function Table<T extends object>({
   columns, dataSource, rowKey = 'key' as keyof T & string,
   pagination = { pageSize: 10 }, onRow, rowSelection,
-  loading, striped, size, empty, maxHeight, toolbar, rowContextMenu, className,
+  loading, striped, size, empty, maxHeight, toolbar, controls, rowContextMenu,
+  stickyHeader, stickyColumns, className,
 }: TableProps<T>) {
   const [sort, setSort] = useState<SortState>(null);
   const [page, setPage] = useState(1);
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[]>>({});
   // 每页条数:初值取 pageSize(缺省 10),之后由分页器的条数选择驱动
   const [innerSize, setInnerSize] = useState(
     pagination === false ? 10 : (pagination.pageSize ?? pagination.pageSizeOptions?.[0] ?? 10),
@@ -157,14 +187,53 @@ export function Table<T extends object>({
   const colKey = (c: ColumnType<T>, i: number) => c.key ?? c.dataIndex ?? String(i);
   const rowDisabled = (r: T) => !!rowSelection?.getCheckboxProps?.(r).disabled;
 
-  const sorted = useMemo(() => {
-    if (!sort) return dataSource;
-    const col = columns.find((c, i) => colKey(c, i) === sort.key);
-    if (!col?.sorter) return dataSource;
-    const s = sort.dir === 'asc' ? 1 : -1;
-    return [...dataSource].sort((a, b) => col.sorter!(a, b) * s);
+  /* 搜索 + 筛选 */
+  const hasSearch = controls?.search === true;
+  const filterDefs = controls?.filters ?? [];
+  const hasActiveSearch = globalFilter.length > 0;
+  const activeFilterCount = Object.values(columnFilters).filter((v) => v.length > 0).length;
+  const hasActiveFilters = activeFilterCount > 0;
+  const hasActiveControls = hasActiveSearch || hasActiveFilters;
+
+  const filtered = useMemo(() => {
+    let out = dataSource;
+    if (globalFilter) {
+      const q = globalFilter.toLowerCase();
+      out = out.filter((r) =>
+        columns.some((c) => {
+          const raw = c.dataIndex ? (r as any)[c.dataIndex] : undefined;
+          return String(raw ?? '').toLowerCase().includes(q);
+        }),
+      );
+    }
+    for (const [key, values] of Object.entries(columnFilters)) {
+      if (values.length === 0) continue;
+      const def = filterDefs.find((f) => f.columnKey === key);
+      if (!def) continue;
+      if (def.filterFn) {
+        out = out.filter((r) => def.filterFn!(r, values));
+      } else {
+        const colIdx = columns.findIndex((c, i) => colKey(c, i) === key);
+        if (colIdx < 0) continue;
+        const col = columns[colIdx];
+        out = out.filter((r) => {
+          const raw = col.dataIndex ? (r as any)[col.dataIndex] : undefined;
+          return values.includes(String(raw ?? ''));
+        });
+      }
+    }
+    return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataSource, sort, columns]);
+  }, [dataSource, globalFilter, columnFilters, columns, filterDefs]);
+
+  const sorted = useMemo(() => {
+    if (!sort) return filtered;
+    const col = columns.find((c, i) => colKey(c, i) === sort.key);
+    if (!col?.sorter) return filtered;
+    const s = sort.dir === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => col.sorter!(a, b) * s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, sort, columns]);
 
   /* dataSource 缩减后当前页可能越界:钳到 [1, maxPage] 并回写内部态
      (page 为非受控内部 state,不存在受控语义冲突) */
@@ -202,13 +271,70 @@ export function Table<T extends object>({
       .concat(columns.map((c) => c.width ?? '1fr')).join(' '),
   };
 
+  /* sticky 列:计算每列左偏移(仅水平 sticky 场景) */
+  const stickyOffsets = useMemo(() => {
+    if (!stickyColumns?.length) return null;
+    const offsets = new Map<string, number>();
+    let offset = rowSelection ? 44 : 0;
+    for (const c of columns) {
+      const k = colKey(c, columns.indexOf(c));
+      if (stickyColumns.includes(k)) {
+        offsets.set(k, offset);
+        // width 可能是 '1fr' 或 '100px',只有 px 可计算;fr 列不吸附
+        const w = c.width ?? '1fr';
+        const px = w.endsWith('px') ? parseFloat(w) : 0;
+        offset += px;
+      } else {
+        const w = c.width ?? '1fr';
+        const px = w.endsWith('px') ? parseFloat(w) : 0;
+        offset += px;
+      }
+    }
+    return offsets;
+  }, [columns, stickyColumns, rowSelection]);
+
   const body = (
     <div className={className} ref={rootRef}>
       {toolbar != null && <div className="tbl-toolbar">{toolbar}</div>}
-      <div className={cn('datagrid', striped && 'striped', size === 'small' && 'compact')} role="grid">
+      {(hasSearch || filterDefs.length > 0) && (
+        <div className="tbl-controls">
+          {hasSearch && (
+            <div className="tbl-search">
+              <SearchBox
+                aria-label="搜索"
+                value={globalFilter}
+                onChange={setGlobalFilter}
+                placeholder="搜索…"
+                size="small"
+              />
+              {hasActiveSearch && (
+                <button className="tbl-clear" aria-label="清除搜索" onClick={() => setGlobalFilter('')}>
+                  ×
+                </button>
+              )}
+            </div>
+          )}
+          {filterDefs.length > 0 && (
+            <div className="tbl-filter">
+              <Button size="small" variant="subtle" aria-label="筛选"
+                      onClick={() => { /* 筛选菜单暂略,后续用 MenuList 实现 */ }}>
+                筛选{activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
+              </Button>
+            </div>
+          )}
+          {hasActiveControls && controls?.clearAll !== false && (
+            <Button size="small" variant="link" onClick={() => { setGlobalFilter(''); setColumnFilters({}); }}>
+              清除全部
+            </Button>
+          )}
+        </div>
+      )}
+      <div className={cn('datagrid', striped && 'striped', size === 'small' && 'compact',
+                         stickyHeader && 'sticky-header')} role="grid">
         <div className="dg-row dg-head" style={gridCols} role="row">
           {rowSelection && (
-            <div className="dg-cell dg-sel" role="columnheader">
+            <div className="dg-cell dg-sel" role="columnheader"
+                 style={stickyColumns?.length ? { position: 'sticky', left: 0, zIndex: 3 } : undefined}>
               {selType === 'checkbox' && (
                 <Checkbox aria-label="全选本页" checked={allChecked} indeterminate={someChecked}
                           onChange={toggleAll} />
@@ -218,12 +344,15 @@ export function Table<T extends object>({
           {columns.map((c, i) => {
             const k = colKey(c, i);
             const active = sort?.key === k ? sort.dir : undefined;
+            const stickyLeft = stickyOffsets?.get(k);
+            const isSticky = stickyLeft !== undefined;
             return (
               <div key={k}
                    className={cn('dg-cell', c.sorter && 'sortable', cellAlign(c.align))}
                    data-sort={active}
                    role="columnheader"
                    aria-sort={active === 'asc' ? 'ascending' : active === 'desc' ? 'descending' : undefined}
+                   style={isSticky ? { position: 'sticky', left: stickyLeft, zIndex: 2 } : undefined}
                    onClick={() => c.sorter && cycleSort(k)}>
                 {c.title}
                 {c.sorter && <SortInd active={active} />}
@@ -255,7 +384,8 @@ export function Table<T extends object>({
                    }}
                    onKeyDown={(e) => { if (e.key === 'Enter') extra?.onClick?.(); }}>
                 {rowSelection && (
-                  <div className="dg-cell dg-sel" onClick={(e) => e.stopPropagation()}>
+                  <div className="dg-cell dg-sel" onClick={(e) => e.stopPropagation()}
+                       style={stickyColumns?.length ? { position: 'sticky', left: 0, zIndex: 1 } : undefined}>
                     {selType === 'checkbox' ? (
                       <Checkbox aria-label={`选择行 ${k}`} checked={selected} disabled={dis}
                                 onChange={() => toggleRow(k)} />
@@ -270,8 +400,11 @@ export function Table<T extends object>({
                 )}
                 {columns.map((c, ci) => {
                   const raw = c.dataIndex ? (r as any)[c.dataIndex] : undefined;
+                  const stickyLeft = stickyOffsets?.get(colKey(c, ci));
+                  const isSticky = stickyLeft !== undefined;
                   return (
-                    <div key={colKey(c, ci)} className={cn('dg-cell', cellAlign(c.align))}>
+                    <div key={colKey(c, ci)} className={cn('dg-cell', cellAlign(c.align))}
+                         style={isSticky ? { position: 'sticky', left: stickyLeft, zIndex: 1 } : undefined}>
                       {c.render ? c.render(raw, r, ri) : String(raw ?? '')}
                     </div>
                   );

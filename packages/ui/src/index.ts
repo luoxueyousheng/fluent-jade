@@ -27,7 +27,7 @@ export { RadioGroup, type RadioGroupProps } from './components/RadioGroup';
 export { Pagination, type PaginationProps } from './components/Pagination';
 export { Steps, type StepsProps, type StepItem } from './components/Steps';
 export { Tree, type TreeProps, type TreeDataNode } from './components/Tree';
-export { Table, type TableProps, type ColumnType, type TableRowSelection, type TableContextMenu } from './components/Table';
+export { Table, type TableProps, type ColumnType, type TableRowSelection, type TableContextMenu, type TableControls, type TableFilter, type TableFilterOption } from './components/Table';
 export {
   Calendar, DatePicker, TimePicker, RangePicker, formatDate,
   type CalendarProps, type DatePickerProps, type TimePickerProps, type RangePickerProps,
@@ -80,3 +80,5 @@ export { Marquee, type MarqueeProps } from './components/Marquee';
 export { BentoGrid, BentoCard, type BentoGridProps, type BentoCardProps } from './components/BentoGrid';
 export { ThemeToggler, type ThemeTogglerProps } from './components/ThemeToggler';
 export { Dock, DockIcon, type DockProps, type DockIconProps } from './components/Dock';
+export { DataView, type DataViewProps } from './components/DataView';
+export { SelectionBar, type SelectionBarProps } from './components/SelectionBar';
