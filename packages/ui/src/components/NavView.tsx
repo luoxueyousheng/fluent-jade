@@ -73,7 +73,6 @@ function flattenVisible(items: NavEntry[], expanded: Set<string>, collapsed: boo
 
 export function NavView({ items, value, onChange, collapsed, onCollapsedChange, header, className }: NavViewProps) {
   const navRef = useRef<HTMLElement>(null);
-  const indRef = useRef<HTMLDivElement>(null);
   const triggerRefs = useRef(new Map<string, HTMLButtonElement>());
   const [expanded, setExpanded] = useState<Set<string>>(() => {
     const parent = findParentSubmenu(items, value);
@@ -99,52 +98,21 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
     [items, expanded, isCollapsed],
   );
 
-  const selectionDirection: Dir = useMemo(() => {
-    const prev = indicatorTarget;
-    const curr = value;
-    if (!prev || !curr || prev === curr) return null;
-    const iPrev = visibleOrder.indexOf(prev);
-    const iCurr = visibleOrder.indexOf(curr);
-    if (iPrev === -1 || iCurr === -1) return null;
-    return iCurr > iPrev ? 'down' : 'up';
-  }, [indicatorTarget, value, visibleOrder]);
+  const prevTargetRef = useRef<string>(indicatorTarget);
+  const [selectionDirection, setSelectionDirection] = useState<Dir>(null);
 
-  /* 切换选中项时重启指示条入场动画:
-     先移除方向类 → 强制回流 → 同帧加回,CSS animation 重新跑 */
-  useEffect(() => {
-    const ind = indRef.current;
-    if (!ind || !selectionDirection) return;
-    ind.classList.remove('nav-indicator-enter-down', 'nav-indicator-enter-up');
-    void ind.offsetWidth;   // 强制回流,确保移除生效
-    ind.classList.add(`nav-indicator-enter-${selectionDirection}`);
-  }, [selectionDirection]);
-
-  const move = useCallback((animate: unknown = true) => {
-    const nav = navRef.current, ind = indRef.current;
-    if (!nav || !ind) return;
-    if (!animate) ind.style.transition = 'none';
-    const item = nav.querySelector<HTMLElement>('.nav-item.active');
-    if (!item) { ind.style.opacity = '0'; return; }
-    const navRect = nav.getBoundingClientRect();
-    const r = item.getBoundingClientRect();
-    const scroller = item.closest('.nav-top');
-    if (scroller) {
-      const s = scroller.getBoundingClientRect();
-      const mid = r.top + r.height / 2;
-      ind.style.opacity = mid < s.top || mid > s.bottom ? '0' : '';
-    } else {
-      ind.style.opacity = '';
+  useLayoutEffect(() => {
+    const prev = prevTargetRef.current;
+    const curr = indicatorTarget;
+    if (prev !== curr) {
+      const iPrev = visibleOrder.indexOf(prev);
+      const iCurr = visibleOrder.indexOf(curr);
+      setSelectionDirection(
+        iCurr > iPrev ? 'down' : iCurr < iPrev ? 'up' : null,
+      );
+      prevTargetRef.current = curr;
     }
-    const barH = Math.max(12, r.height - 16);
-    ind.style.height = `${barH}px`;
-    ind.style.transform = `translateY(${r.top - navRect.top + (r.height - barH) / 2}px)`;
-    if (!animate) {
-      void ind.offsetHeight;
-      ind.style.transition = '';
-    }
-  }, []);
-
-  useLayoutEffect(() => move(), [indicatorTarget, collapsed, items, expanded, move]);
+  }, [indicatorTarget, visibleOrder]);
 
   const updateScrollHint = useCallback(() => {
     const nav = navRef.current?.querySelector<HTMLElement>('.nav-top');
@@ -171,14 +139,14 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
         const y = r.top - navRect.top;
         if (Math.abs(y - lastY) > 0.5) {
           lastY = y;
-          move(false);
+          updateScrollHint();
         }
       }
       raf = requestAnimationFrame(follow);
     };
     follow();
 
-    const stop = () => { cancelAnimationFrame(raf); move(false); };
+    const stop = () => { cancelAnimationFrame(raf); updateScrollHint(); };
     const onEnd = (e: TransitionEvent) => {
       if (e.propertyName === 'grid-template-rows') stop();
     };
@@ -190,16 +158,16 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
       clearTimeout(timer);
       nav.removeEventListener('transitionend', onEnd);
     };
-  }, [expanded, move]);
+  }, [expanded, updateScrollHint]);
 
   useEffect(() => {
     const nav = navRef.current;
     if (!nav) return;
-    const ro = new ResizeObserver(() => { move(); updateScrollHint(); });
+    const ro = new ResizeObserver(() => { updateScrollHint(); });
     ro.observe(nav);
-    const onEnd = (e: TransitionEvent) => { if (e.propertyName === 'width') move(); };
+    const onEnd = (e: TransitionEvent) => { if (e.propertyName === 'width') updateScrollHint(); };
     nav.addEventListener('transitionend', onEnd);
-    const onScroll = () => { move(false); updateScrollHint(); };
+    const onScroll = () => { updateScrollHint(); };
     nav.addEventListener('scroll', onScroll, { capture: true, passive: true });
     updateScrollHint();
     return () => {
@@ -207,7 +175,7 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
       nav.removeEventListener('transitionend', onEnd);
       nav.removeEventListener('scroll', onScroll, { capture: true });
     };
-  }, [move, updateScrollHint]);
+  }, [updateScrollHint]);
 
   const handleItemChange = useCallback((key: string) => {
     const item = items.find((it) => !isHeader(it) && it.key === key) as NavItemDef | undefined
@@ -252,6 +220,7 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
         className={cn(
           'nav-item',
           active && 'active',
+          active && selectionDirection && `indicator-${selectionDirection}`,
           it.disabled && 'disabled',
           hasChildren && 'nav-submenu-trigger',
           depth > 0 && 'nav-subitem',
@@ -311,9 +280,6 @@ export function NavView({ items, value, onChange, collapsed, onCollapsedChange, 
   return (
     <nav ref={navRef} className={cn('nav', className)} role='tablist' aria-orientation='vertical'
          {...(isCollapsed ? { 'data-collapsed': '' } : {})}>
-      <div ref={indRef}
-           className={cn('nav-indicator',
-             selectionDirection && `nav-indicator-enter-${selectionDirection}`)} />
       {onCollapsedChange && (
         <button className='nav-item nav-hamburger' title='展开/收缩导航' aria-label='展开或收缩导航'
                 onClick={() => onCollapsedChange(!collapsed)}>

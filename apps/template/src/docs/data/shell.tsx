@@ -658,6 +658,41 @@ export function NavViewExample() {
 }`,
     },
     {
+      title: '子导航(children)',
+      description: 'children 提供即为可展开/折叠的子菜单;active 项的父菜单自动展开,折叠态点击父项弹出悬浮菜单。',
+      demo: <NavViewSubmenuDemo />,
+      code: `
+import { useState } from 'react';
+import { NavView, type NavEntry } from '@fluent-jade/ui';
+import { DocumentRegular, ImageRegular, SettingsRegular, HomeRegular } from '@fluent-jade/icon';
+
+const ITEMS: NavEntry[] = [
+  { key: 'home', label: '首页', icon: <HomeRegular /> },
+  { header: '媒体' },
+  {
+    key: 'media', label: '媒体库', icon: <DocumentRegular />,
+    children: [
+      { key: 'music', label: '音乐' },
+      { key: 'video', label: '视频' },
+      { key: 'photo', label: '相册' },
+    ],
+  },
+  { key: 'settings', label: '设置', icon: <SettingsRegular />, bottom: true },
+];
+
+export function NavViewSubmenuExample() {
+  const [page, setPage] = useState('music');
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <div className="flex h-[320px] w-full overflow-hidden rounded-lg border border-(--card-border)">
+      <NavView items={ITEMS} value={page} onChange={setPage}
+               collapsed={collapsed} onCollapsedChange={setCollapsed} />
+      <div className="flex-1 p-4 text-(--text-2)">当前页:{page}(点「媒体库」展开子项)</div>
+    </div>
+  );
+}`,
+    },
+    {
       title: '标题栏汉堡形态(WinUI 3)',
       description: '不传 onCollapsedChange 则不渲染内置汉堡,collapsed 完全受控——把汉堡放进 TitleBar 的 onMenu,收缩/展开由标题栏驱动。',
       demo: <NavViewTitleBarDemo />,
@@ -731,6 +766,31 @@ export function NavHeaderExample() {
     },
   ],
 };
+
+function NavViewSubmenuDemo() {
+  const [page, setPage] = useState('music');
+  const [collapsed, setCollapsed] = useState(false);
+  const items: NavEntry[] = [
+    { key: 'home', label: '首页', icon: <HomeRegular /> },
+    { header: '媒体' },
+    {
+      key: 'media', label: '媒体库', icon: <DocumentRegular />,
+      children: [
+        { key: 'music', label: '音乐' },
+        { key: 'video', label: '视频' },
+        { key: 'photo', label: '相册' },
+      ],
+    },
+    { key: 'settings', label: '设置', icon: <SettingsRegular />, bottom: true },
+  ];
+  return (
+    <div style={{ display: 'flex', height: 320, width: '100%', overflow: 'hidden', borderRadius: 8, border: '1px solid var(--card-border)' }}>
+      <NavView items={items} value={page} onChange={setPage}
+               collapsed={collapsed} onCollapsedChange={setCollapsed} />
+      <div style={{ flex: 1, padding: 16, color: 'var(--text-2)', background: 'var(--layer)' }}>当前页:{page}(点「媒体库」展开子项)</div>
+    </div>
+  );
+}
 
 function NavViewDemo() {
   const [page, setPage] = useState('home');

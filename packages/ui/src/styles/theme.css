@@ -373,16 +373,24 @@ html[data-inactive] .accent-text { filter: saturate(0.6); }
 .nav-submenu-inner { min-height: 0; overflow: hidden; }
 .nav-subitem { height: 32px; font-size: 13px; }
 
-/* 指示条:transform transition 平滑滑动;方向类只做轻微入场 */
-.nav-indicator {
-  position: absolute; top: 0; left: 4px; width: 3px; height: 0; border-radius: 2px;
-  background: var(--accent); pointer-events: none;
-  transition: transform var(--slow) var(--fluent-point), height var(--slow) var(--fluent-point);
+/* 指示条:active item 的 ::before 伪元素(对齐 AppRail,不用单独定位元素) */
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 1px; top: 50%;
+  width: 3px; height: 20px; border-radius: 2px;
+  background: var(--accent);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
-.nav-indicator-enter-down { animation: nav-ind-enter 180ms var(--fluent-decelerate); }
-.nav-indicator-enter-up   { animation: nav-ind-enter 180ms var(--fluent-decelerate); }
-@keyframes nav-ind-enter {
-  from { opacity: 0; transform: translateY(-50%) scaleY(0.6); }
+/* 方向入场动画:只在 ::before 上做,不碰 item 的 transform/position */
+.nav-item.active.indicator-down::before { animation: nav-ind-enter-down 300ms var(--fluent-decelerate); }
+.nav-item.active.indicator-up::before   { animation: nav-ind-enter-up 300ms var(--fluent-decelerate); }
+@keyframes nav-ind-enter-down {
+  from { opacity: 0; transform: translateY(calc(-50% - 14px)) scaleY(0.35); }
+  to   { opacity: 1; transform: translateY(-50%) scaleY(1); }
+}
+@keyframes nav-ind-enter-up {
+  from { opacity: 0; transform: translateY(calc(-50% + 14px)) scaleY(0.35); }
   to   { opacity: 1; transform: translateY(-50%) scaleY(1); }
 }
 
